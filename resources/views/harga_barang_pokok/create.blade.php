@@ -1,0 +1,159 @@
+@extends('layouts.app')
+
+@section('title', 'Tambah Barang Pokok')
+
+@push('styles')
+    <style>
+        .form-container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+    </style>
+@endpush
+
+@section('content')
+    <div class="container">
+        <div class="form-container">
+            <div class="form-header">
+                <h1><i class="fas fa-plus-circle"></i> Tambah Barang Pokok</h1>
+            </div>
+
+            <form action="{{ route('harga-barang-pokok.store') }}" method="POST">
+                @csrf
+
+                <div class="form-group">
+                    <label for="uraian">Uraian / Nama Barang *</label>
+                    <input type="text" id="uraian" name="uraian" value="{{ old('uraian') }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="kategori">Kategori *</label>
+                    <select id="kategori" name="kategori" required>
+                        <option value="">Pilih Kategori</option>
+                        @foreach ($kategori_list as $kat)
+                            <option value="{{ $kat }}" {{ old('kategori') == $kat ? 'selected' : '' }}>
+                                {{ $kat }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="satuan">Satuan *</label>
+                    <select id="satuan" name="satuan" required>
+                        <option value="">Pilih Satuan</option>
+                        <option value="Kg" {{ old('satuan') == 'Kg' ? 'selected' : '' }}>Kg</option>
+                        <option value="Gram" {{ old('satuan') == 'Gram' ? 'selected' : '' }}>Gram</option>
+                        <option value="Liter" {{ old('satuan') == 'Liter' ? 'selected' : '' }}>Liter</option>
+                        <option value="Ml" {{ old('satuan') == 'Ml' ? 'selected' : '' }}>Ml</option>
+                        <option value="Pcs" {{ old('satuan') == 'Pcs' ? 'selected' : '' }}>Pcs</option>
+                        <option value="Pack" {{ old('satuan') == 'Pack' ? 'selected' : '' }}>Pack</option>
+                        <option value="Dus" {{ old('satuan') == 'Dus' ? 'selected' : '' }}>Dus</option>
+                        <option value="Karung" {{ old('satuan') == 'Karung' ? 'selected' : '' }}>Karung</option>
+                        <option value="Ball" {{ old('satuan') == 'Ball' ? 'selected' : '' }}>Ball</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="nilai_satuan">Nilai Satuan (untuk konversi ke Kg) *</label>
+                    <input type="number" step="0.01" id="nilai_satuan" name="nilai_satuan"
+                        value="{{ old('nilai_satuan', 1) }}" required>
+                    <small style="color: #7f8c8d;">Contoh: 1 Kg = 1, 500 Gram = 0.5, 1 Liter = 1</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="harga_satuan">Harga Satuan (Rp) *</label>
+                    <input type="number" id="harga_satuan" name="harga_satuan" value="{{ old('harga_satuan') }}" required>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Simpan
+                    </button>
+                    <a href="{{ route('harga-barang-pokok.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Batal
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection
