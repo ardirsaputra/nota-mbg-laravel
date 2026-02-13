@@ -4,123 +4,158 @@
 
 @push('styles')
     <style>
-        body {
-            background: linear-gradient(135deg, #2ecc71, #e74c3c);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .login-container {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .login-header {
+        /* Make login visually consistent with home: hero + centered card */
+        .login-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 24px 40px;
             text-align: center;
-            margin-bottom: 30px;
         }
 
-        .login-header h1 {
-            color: #2c3e50;
-            font-size: 1.8rem;
-            margin-bottom: 10px;
+        .login-card {
+            max-width: 880px;
+            margin: -40px auto 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            overflow: hidden;
         }
 
-        .login-header p {
-            color: #7f8c8d;
+        .login-intro {
+            padding: 36px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start
+        }
+
+        .login-intro h2 {
+            margin: 0;
+            color: #2c3e50
+        }
+
+        .login-intro p {
+            margin: 0;
+            color: #6b7280
+        }
+
+        .login-form {
+            padding: 28px;
+            background: #ffffff;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 14px
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
-            color: #2c3e50;
+            margin-bottom: 6px;
             font-weight: 600;
+            color: #2c3e50
         }
 
         .form-group input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
+            padding: 10px 12px;
+            border: 1px solid #e6eef6;
+            border-radius: 8px
         }
 
-        .form-group input:focus {
-            outline: none;
-            border-color: #3498db;
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #3498db, #2980b9);
+        .btn-primary {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            padding: 10px 16px;
+            border-radius: 8px;
+            background: #667eea;
             color: white;
             border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            font-weight: 700
         }
 
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        .helper {
+            font-size: 0.92rem;
+            color: #6b7280
         }
 
-        .back-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .back-link a {
-            color: #3498db;
+        .small-link {
+            color: #667eea;
             text-decoration: none;
+            font-weight: 600
         }
 
-        .back-link a:hover {
-            text-decoration: underline;
+        @media (max-width: 900px) {
+            .login-card {
+                grid-template-columns: 1fr;
+                margin: -24px 16px 24px
+            }
+
+            .login-hero {
+                padding: 48px 16px
+            }
         }
     </style>
 @endpush
 
 @section('content')
-    <div class="login-container">
-        <div class="login-header">
-            <h1>Login</h1>
-            <p>CV Mia Jaya Abadi</p>
+    <section class="login-hero">
+        <div class="container">
+            <h1>Selamat Datang di Website <p>{{ $websiteName }}</p>
+            </h1>
+            <p style="max-width:780px; margin:10px auto 0; opacity:0.95">Masuk untuk mengelola nota pembelian.</p>
+        </div>
+    </section>
+
+    <div class="login-card container">
+        <div class="login-intro">
+            <h2>Selamat datang kembali!</h2>
+            <p class="helper">Masukkan kredensial Anda untuk mengakses dashboard admin.</p>
+
+            <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap">
+
+                <div
+                    style="background:#f8fafc;padding:10px 12px;border-radius:8px;font-weight:700;color:#667eea;display:flex;align-items:center;gap:10px">
+                    <i class="fas fa-file-invoice"></i> Buat & Cetak Nota
+                </div>
+            </div>
         </div>
 
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
+        <div class="login-form">
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
 
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" value="{{ old('email') }}" required autofocus>
-            </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus>
+                    @error('email')
+                        <div style="color:#e02424;margin-top:6px">{{ $message }}</div>
+                    @enderror
+                </div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input id="password" type="password" name="password" required>
+                    @error('password')
+                        <div style="color:#e02424;margin-top:6px">{{ $message }}</div>
+                    @enderror
+                </div>
 
-            <button type="submit" class="btn-login">
-                <i class="fas fa-sign-in-alt"></i> Login
-            </button>
-        </form>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+                    <div class="helper"><label style="font-weight:600"><input type="checkbox" name="remember"> &nbsp; Ingat
+                            saya</label></div>
+                    <div><a href="{{ route('register') }}" class="small-link">Daftar Akun</a></div>
+                </div>
 
-        <div class="back-link">
-            <a href="{{ route('home') }}"><i class="fas fa-arrow-left"></i> Kembali ke Beranda</a>
+                <button type="submit" class="btn-primary" style="width:100%"><i class="fas fa-sign-in-alt"></i>&nbsp; Masuk
+                    ke Dashboard</button>
+
+                <div style="text-align: center; margin-top: 16px;">
+                    <a href="{{ route('home') }}" class="helper" style="text-decoration: none;">← Kembali ke Beranda</a>
+                </div>
+            </form>
         </div>
     </div>
 @endsection

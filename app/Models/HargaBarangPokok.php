@@ -14,10 +14,12 @@ class HargaBarangPokok extends Model
         'satuan',
         'nilai_satuan',
         'harga_satuan',
+        'profit_per_unit',
     ];
 
     protected $casts = [
         'nilai_satuan' => 'float',
         'harga_satuan' => 'integer',
+        'profit_per_unit' => 'integer',
     ];
 }

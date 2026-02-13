@@ -4,7 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'CV Mia Jaya Abadi')</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    @php
+        use App\Models\Setting;
+        $companyName = Setting::get('company_name', 'CV Mia Jaya Abadi');
+        $companyLogo = Setting::get('company_logo');
+    @endphp
+    <title>@yield('title', $companyName ?? 'CV Mia Jaya Abadi')</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @stack('styles')
     <style>
@@ -47,6 +53,13 @@
             gap: 12px;
         }
 
+        .nav-logo img {
+            height: 36px;
+            border-radius: 6px;
+            object-fit: contain;
+            display: inline-block;
+        }
+
         .brand-text {
             font-size: 1.2rem;
             font-weight: 700;
@@ -61,10 +74,32 @@
             align-items: center;
         }
 
+        .nav-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
+        }
+
+        .nav-group-items {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav-group-label {
+            font-size: 11px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 700;
+        }
+
         .nav-menu a {
             color: #333;
             text-decoration: none;
-            padding: 10px 20px;
+            padding: 6px 10px;
             border-radius: 6px;
             font-weight: 500;
             transition: all 0.2s;
@@ -77,19 +112,30 @@
             color: white;
         }
 
+        @media (max-width: 900px) {
+            .nav-group-items {
+                flex-direction: column;
+                gap: 6px
+            }
+        }
+
+        /* Logout button — red gradient, matching primary nav style */
         .logout-btn {
-            background: #e74c3c;
+            background: linear-gradient(135deg, #ff7966 0%, #d94b3a 100%);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-radius: 6px;
             border: none;
             cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            font-weight: 700;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+            box-shadow: 0 6px 18px rgba(217, 75, 58, 0.12);
         }
 
         .logout-btn:hover {
-            background: #c0392b;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 26px rgba(217, 75, 58, 0.18);
+            background: linear-gradient(135deg, #ff5f4a 0%, #c73724 100%);
         }
 
         /* Container */
@@ -98,6 +144,64 @@
             margin: 0 auto;
             padding: 20px 24px;
         }
+
+        /* Global button (uniform UI) */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+            line-height: 1;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+
+        .btn:active {
+            transform: translateY(1px)
+        }
+
+        .btn[disabled],
+        .btn.disabled {
+            opacity: .6;
+            pointer-events: none
+        }
+
+        /* Color modifiers */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #5a4ed6);
+            color: #fff
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: #fff
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: #fff
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #d35400);
+            color: #fff
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff
+        }
+
+        .btn:hover {
+            transform: translateY(-2px)
+        }
+
 
         /* Alert Messages */
         .alert {
@@ -162,13 +266,17 @@
             .nav-menu {
                 position: absolute;
                 top: 70px;
-                left: 0;
-                right: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                /* match container width and center */
+                width: calc(100% - 48px);
+                max-width: 1200px;
                 background: white;
                 flex-direction: column;
                 padding: 20px;
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
                 display: none;
+                border-radius: 8px;
             }
 
             .nav-menu.active {
@@ -185,24 +293,88 @@
 
 <body>
     @if (Auth::check())
-        <!-- Admin Navbar -->
+        <!-- Authenticated Navbar -->
         <nav class="navbar">
             <div class="container">
                 <div class="nav-logo">
-                    <span class="brand-text">CV Mia Jaya Abadi</span>
+                    @if (!empty($companyLogo))
+                        <img src="{{ asset('storage/' . $companyLogo) }}" alt="{{ $companyName }}">
+                    @endif
+                    <span class="brand-text">{{ $companyName }}</span>
                 </div>
                 <ul class="nav-menu" id="navMenu">
-                    <li><a href="{{ route('admin') }}" class="{{ request()->routeIs('admin') ? 'active' : '' }}"><i
-                                class="fas fa-home"></i> Dashboard</a></li>
-                    <li><a href="{{ route('harga-barang-pokok.index') }}"
-                            class="{{ request()->routeIs('harga-barang-pokok.*') ? 'active' : '' }}"><i
-                                class="fas fa-dollar-sign"></i> Harga Barang</a></li>
-                    <li><a href="{{ route('nota.index') }}"
-                            class="{{ request()->routeIs('nota.*') ? 'active' : '' }}"><i
-                                class="fas fa-file-invoice"></i> Nota</a></li>
-                    <li><a href="{{ route('satuan.index') }}"
-                            class="{{ request()->routeIs('satuan.*') ? 'active' : '' }}"><i class="fas fa-ruler"></i>
-                            Satuan</a></li>
+                    @if (Auth::user()->isAdmin())
+                        <!-- Admin grouped menu -->
+                        <li class="nav-group">
+                            <div class="nav-group-label">Main</div>
+                            <div class="nav-group-items">
+                                <a href="{{ route('admin') }}"
+                                    class="{{ request()->routeIs('admin') ? 'active' : '' }}"><i
+                                        class="fas fa-home"></i> Dashboard</a>
+                            </div>
+                        </li>
+
+                        <li class="nav-group">
+                            <div class="nav-group-label">Master Data</div>
+                            <div class="nav-group-items">
+                                <a href="{{ route('harga-barang-pokok.index') }}"
+                                    class="{{ request()->routeIs('harga-barang-pokok.*') ? 'active' : '' }}"><i
+                                        class="fas fa-dollar-sign"></i> Harga</a>
+                                <a href="{{ route('satuan.index') }}"
+                                    class="{{ request()->routeIs('satuan.*') ? 'active' : '' }}"><i
+                                        class="fas fa-ruler"></i> Satuan</a>
+                                <a href="{{ route('kategori.index') }}"
+                                    class="{{ request()->routeIs('kategori.*') ? 'active' : '' }}"><i
+                                        class="fas fa-tags"></i> Kategori</a>
+                                <a href="{{ route('toko.index') }}"
+                                    class="{{ request()->routeIs('toko.*') ? 'active' : '' }}"><i
+                                        class="fas fa-store"></i> Toko</a>
+                            </div>
+                        </li>
+
+                        <li class="nav-group">
+                            <div class="nav-group-label">Transaksi</div>
+                            <div class="nav-group-items">
+                                <a href="{{ route('nota.index') }}"
+                                    class="{{ request()->routeIs('nota.*') ? 'active' : '' }}"><i
+                                        class="fas fa-file-invoice"></i> Nota</a>
+                            </div>
+                        </li>
+
+                        <li class="nav-group">
+                            <div class="nav-group-label">Pengguna</div>
+                            <div class="nav-group-items">
+                                <a href="{{ route('users.index') }}"
+                                    class="{{ request()->routeIs('users.*') ? 'active' : '' }}"><i
+                                        class="fas fa-users"></i> Pengguna</a>
+                            </div>
+                        </li>
+                    @else
+                        <!-- User grouped menu -->
+                        <li class="nav-group">
+                            <div class="nav-group-label">Akun</div>
+                            <div class="nav-group-items">
+                                <a href="{{ route('nota.index') }}"
+                                    class="{{ request()->routeIs('nota.*') ? 'active' : '' }}"><i
+                                        class="fas fa-file-invoice"></i> Nota Saya</a>
+                                <a href="{{ route('profile.edit') }}"
+                                    class="{{ request()->routeIs('profile.*') ? 'active' : '' }}"><i
+                                        class="fas fa-user-cog"></i> Edit Profil</a>
+                            </div>
+                        </li>
+
+                        <li class="nav-group">
+                            <div class="nav-group-label">Jelajahi</div>
+                            <div class="nav-group-items">
+                                <a href="{{ route('home') }}">Beranda</a>
+                                <a href="{{ route('contact') }}">Kontak</a>
+                            </div>
+                        </li>
+
+                        <li style="display:flex; align-items:center; padding-left:8px; color:#666"><i
+                                class="fas fa-user" style="margin-right:8px"></i> {{ Auth::user()->name }}</li>
+                    @endif
+
                     <li>
                         <form action="{{ route('logout') }}" method="POST" style="display: inline;">
                             @csrf
@@ -223,15 +395,34 @@
         <nav class="navbar">
             <div class="container">
                 <div class="nav-logo">
-                    <span class="brand-text">CV Mia Jaya Abadi</span>
+                    @if (!empty($companyLogo))
+                        <img src="{{ asset('storage/' . $companyLogo) }}" alt="{{ $companyName }}">
+                    @endif
+                    <span class="brand-text">{{ $companyName }}</span>
                 </div>
                 <ul class="nav-menu" id="navMenu">
-                    <li><a href="{{ route('home') }}"
-                            class="{{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a></li>
-                    <li><a href="{{ route('contact') }}"
-                            class="{{ request()->routeIs('contact') ? 'active' : '' }}">Kontak</a></li>
-                    <li><a href="{{ route('login') }}"
-                            class="{{ request()->routeIs('login') ? 'active' : '' }}">Login</a></li>
+                    <li class="nav-group">
+                        <div class="nav-group-label">Jelajahi</div>
+                        <div class="nav-group-items">
+                            <a href="{{ route('home') }}"
+                                class="{{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a>
+                            <a href="{{ route('harga-barang-pokok.index') }}"
+                                class="{{ request()->routeIs('harga-barang-pokok.*') ? 'active' : '' }}">Daftar
+                                Harga</a>
+                            <a href="{{ route('contact') }}"
+                                class="{{ request()->routeIs('contact') ? 'active' : '' }}">Kontak</a>
+                        </div>
+                    </li>
+
+                    <li class="nav-group">
+                        <div class="nav-group-label">Akun</div>
+                        <div class="nav-group-items">
+                            <a href="{{ route('login') }}"
+                                class="{{ request()->routeIs('login') ? 'active' : '' }}">Login</a>
+                            <a href="{{ route('register') }}"
+                                class="{{ request()->routeIs('register') ? 'active' : '' }}">Daftar</a>
+                        </div>
+                    </li>
                 </ul>
                 <div class="hamburger" onclick="toggleMenu()">
                     <span></span>
@@ -288,6 +479,31 @@
         });
     </script>
 
+    <script>
+        // global handler for three-dot action menus
+        document.addEventListener('click', function(e) {
+            const toggle = e.target.closest('.action-menu-button');
+            if (toggle) {
+                const menu = toggle.closest('.action-menu').querySelector('.action-menu-list');
+                document.querySelectorAll('.action-menu-list.show').forEach(function(m) {
+                    if (m !== menu) m.classList.remove('show');
+                });
+                menu.classList.toggle('show');
+                return;
+            }
+            if (!e.target.closest('.action-menu')) {
+                document.querySelectorAll('.action-menu-list.show').forEach(function(m) {
+                    m.classList.remove('show');
+                });
+            }
+        });
+        // close on ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') document.querySelectorAll('.action-menu-list.show').forEach(function(m) {
+                m.classList.remove('show');
+            });
+        });
+    </script>
     @stack('scripts')
 </body>
 

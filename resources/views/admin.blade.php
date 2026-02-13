@@ -123,10 +123,72 @@
                 <i class="fas fa-tachometer-alt"></i>
                 Dashboard Admin
             </h1>
-            <p>Selamat datang di Panel Admin CV Mia Jaya Abadi</p>
+            <p>Selamat datang di Panel Admin {{ $companyName ?? '' }}</p>
         </div>
 
+        <!-- Top stats -->
         <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-icon blue">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <h3>Jumlah Nota</h3>
+                <p class="mb-3">Total semua nota yang tercatat dalam sistem.</p>
+                <div style="font-size:28px;font-weight:800;color:#2c3e50">{{ number_format($notaCount ?? 0) }}</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon green">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Jumlah Pelanggan</h3>
+                <p class="mb-3">Total pengguna dengan role <code>user</code>.</p>
+                <div style="font-size:28px;font-weight:800;color:#2c3e50">{{ number_format($customerCount ?? 0) }}</div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon orange">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <h3>Produk Terupdate (5 hari)</h3>
+                <p class="mb-3">Produk yang diperbarui dalam 5 hari terakhir.</p>
+                <div style="font-size:20px;font-weight:700;color:#2c3e50">{{ ($recentProducts ?? collect())->count() }}
+                    produk</div>
+            </div>
+        </div>
+
+        <!-- Recent products list + existing action cards -->
+        <div class="dashboard-grid" style="margin-top:20px;">
+            <div class="card" style="grid-column: span 2;">
+                <h3>Produk yang diperbarui dalam 5 hari terakhir</h3>
+                <p class="text-muted">Daftar perubahan terbaru pada master harga barang pokok.</p>
+
+                @if (isset($recentProducts) && $recentProducts->count())
+                    <table style="width:100%;margin-top:16px;border-collapse:collapse">
+                        <thead>
+                            <tr style="text-align:left;border-bottom:1px solid #e6e9ee">
+                                <th style="padding:10px">Uraian</th>
+                                <th style="padding:10px;width:140px">Harga</th>
+                                <th style="padding:10px;width:180px">Terakhir diubah</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($recentProducts as $bp)
+                                <tr>
+                                    <td style="padding:12px 10px">{{ $bp->uraian }}</td>
+                                    <td style="padding:12px 10px">Rp {{ number_format($bp->harga) }}</td>
+                                    <td style="padding:12px 10px">{{ $bp->updated_at->format('d M Y H:i') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @else
+                    <p class="text-muted" style="margin-top:12px">Tidak ada produk yang diperbarui dalam 5 hari terakhir.
+                    </p>
+                @endif
+            </div>
+
+            <!-- keep existing quick-action cards -->
             <div class="card">
                 <div class="card-icon green">
                     <i class="fas fa-dollar-sign"></i>
@@ -157,6 +219,39 @@
                 <p>Kelola master data satuan barang (Kg, Liter, Pcs, dll).</p>
                 <a href="{{ route('satuan.index') }}" class="btn">
                     <i class="fas fa-arrow-right"></i> Kelola Satuan
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon lightblue">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <h3>Kategori</h3>
+                <p>Kelola kategori produk yang muncul saat menambah atau mengedit harga barang.</p>
+                <a href="{{ route('kategori.index') }}" class="btn">
+                    <i class="fas fa-arrow-right"></i> Kelola Kategori
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon orange">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Pengguna Terdaftar</h3>
+                <p>Kelola pengguna yang terdaftar dan clone nota mereka.</p>
+                <a href="{{ route('users.index') }}" class="btn">
+                    <i class="fas fa-arrow-right"></i> Kelola Pengguna
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon purple">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h3>Pengaturan Website</h3>
+                <p>Atur tampilan landing page, galeri, kontak dan informasi perusahaan.</p>
+                <a href="{{ route('settings.edit') }}" class="btn">
+                    <i class="fas fa-arrow-right"></i> Buka Pengaturan
                 </a>
             </div>
 

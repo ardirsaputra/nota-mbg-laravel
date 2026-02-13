@@ -15,11 +15,24 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@gmail.com',
+        // ]);
+        // Admin seed (idempotent)
+        \App\Models\User::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name' => 'admin',
+                'password' => 'admin123123',
+                'role' => 'admin',
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Seed toko data
+        $this->call(TokoSeeder::class);
+
+        // Seed default settings
+        $this->call(SettingSeeder::class);
     }
 }

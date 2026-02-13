@@ -145,6 +145,14 @@
                     <input type="number" id="harga_satuan" name="harga_satuan" value="{{ old('harga_satuan') }}" required>
                 </div>
 
+                <div class="form-group">
+                    <label for="profit_per_unit">Keuntungan per Satuan (Rp)</label>
+                    <input type="number" id="profit_per_unit" name="profit_per_unit"
+                        value="{{ old('profit_per_unit', 0) }}" min="0">
+                    <small style="color:#7f8c8d;">Opsional — diisi jika ingin menetapkan keuntungan per unit untuk
+                        perhitungan.</small>
+                </div>
+
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Simpan

@@ -15,12 +15,14 @@ class NotaItem extends Model
         'qty',
         'harga_satuan',
         'subtotal',
+        'profit_per_unit',
     ];
 
     protected $casts = [
         'qty' => 'integer',
         'harga_satuan' => 'integer',
         'subtotal' => 'integer',
+        'profit_per_unit' => 'integer',
     ];
 
     public function nota()

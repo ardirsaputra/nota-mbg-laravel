@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Ensure DB connection uses GMT+7 for MySQL/MariaDB connections
+        try {
+            DB::statement("SET time_zone = '+07:00'");
+        } catch (\Throwable $e) {
+            // ignore if DB not available during some artisan commands
+        }
     }
 }
