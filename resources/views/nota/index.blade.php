@@ -544,6 +544,54 @@
                 width: 100%;
             }
         }
+
+        /* ── Pagination (custom, compact & accessible) ── */
+        .pagination-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pagination {
+            list-style: none;
+            display: flex;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            align-items: center;
+        }
+
+        .pagination .page-item { display: inline-block; }
+        .pagination .page-link {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #e6eef8;
+            background: #fff;
+            color: #334155;
+            font-weight: 700;
+            text-decoration: none;
+            min-width: 36px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(2,6,23,0.02);
+        }
+
+        .pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 10px 30px rgba(102,126,234,0.12);
+        }
+
+        .pagination .page-item.disabled .page-link {
+            opacity: .55;
+            pointer-events: none;
+            background: #f8fafc;
+        }
+
+        .page-jump { display: inline-flex; gap: 8px; align-items: center; }
+        .page-jump input[type="number"] { width: 80px; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .page-info { color: #64748b; font-size: .9rem; }
     </style>
 @endpush
 
@@ -747,8 +795,7 @@
 
                                 <td class="nota-date">
                                     @if ($nota->tanggal)
-                                        <div>{{ $nota->tanggal->format('d M Y') }}</div>
-                                        <div style="font-size:.75rem; color:#94a3b8;">{{ $nota->tanggal->format('H:i') }}
+                                        <div>{{ $nota->tanggal->format('d M Y') }}
                                         </div>
                                     @else
                                         <span style="color:#cbd5e1;">—</span>
@@ -859,11 +906,82 @@
             <div
                 style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-top:1px solid #f1f5f9;background:#fff;">
                 <div style="color:#64748b;font-size:.9rem;">
-                    Menampilkan {{ $notas->firstItem() ?? 0 }} - {{ $notas->lastItem() ?? 0 }} dari {{ $notas->total() }}
-                    nota
+                    Menampilkan <strong>{{ $notas->firstItem() ?? 0 }}</strong> - <strong>{{ $notas->lastItem() ?? 0 }}</strong>
+                    dari <strong>{{ $notas->total() }}</strong> nota
                 </div>
-                <div>
-                    {{ $notas->onEachSide(1)->links() }}
+
+                <div class="pagination-wrapper">
+                    @php
+                        $current = $notas->currentPage();
+                        $last = $notas->lastPage();
+                        $query = request()->except('page');
+                        $base = url()->current();
+                        $start = max(1, $current - 2);
+                        $end = min($last, $current + 2);
+                    @endphp
+
+                    @if ($last > 1)
+                        <nav aria-label="Pagination">
+                            <ul class="pagination">
+                                {{-- First --}}
+                                <li class="page-item {{ $current == 1 ? 'disabled' : '' }}">
+                                    <a class="page-link" href="{{ $current == 1 ? '#' : ($base . '?' . http_build_query(array_merge($query, ['page' => 1]))) }}" aria-label="First">&laquo;&laquo;</a>
+                                </li>
+
+                                {{-- Prev --}}
+                                <li class="page-item {{ $current == 1 ? 'disabled' : '' }}">
+                                    <a class="page-link" href="{{ $current == 1 ? '#' : ($base . '?' . http_build_query(array_merge($query, ['page' => $current - 1]))) }}" aria-label="Previous">&laquo;</a>
+                                </li>
+
+                                {{-- Leading 1 + ellipsis --}}
+                                @if ($start > 1)
+                                    <li class="page-item"><a class="page-link" href="{{ $base . '?' . http_build_query(array_merge($query, ['page' => 1])) }}">1</a></li>
+                                    @if ($start > 2)
+                                        <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                                    @endif
+                                @endif
+
+                                {{-- Page numbers --}}
+                                @for ($i = $start; $i <= $end; $i++)
+                                    <li class="page-item {{ $i == $current ? 'active' : '' }}">
+                                        @if ($i == $current)
+                                            <span class="page-link">{{ $i }}</span>
+                                        @else
+                                            <a class="page-link" href="{{ $base . '?' . http_build_query(array_merge($query, ['page' => $i])) }}">{{ $i }}</a>
+                                        @endif
+                                    </li>
+                                @endfor
+
+                                {{-- Trailing ellipsis + last --}}
+                                @if ($end < $last)
+                                    @if ($end < $last - 1)
+                                        <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                                    @endif
+                                    <li class="page-item"><a class="page-link" href="{{ $base . '?' . http_build_query(array_merge($query, ['page' => $last])) }}">{{ $last }}</a></li>
+                                @endif
+
+                                {{-- Next --}}
+                                <li class="page-item {{ $current == $last ? 'disabled' : '' }}">
+                                    <a class="page-link" href="{{ $current == $last ? '#' : ($base . '?' . http_build_query(array_merge($query, ['page' => $current + 1]))) }}" aria-label="Next">&raquo;</a>
+                                </li>
+
+                                {{-- Last --}}
+                                <li class="page-item {{ $current == $last ? 'disabled' : '' }}">
+                                    <a class="page-link" href="{{ $current == $last ? '#' : ($base . '?' . http_build_query(array_merge($query, ['page' => $last]))) }}" aria-label="Last">&raquo;&raquo;</a>
+                                </li>
+                            </ul>
+                        </nav>
+
+                        <form method="GET" action="{{ $base }}" class="page-jump" style="display:inline-flex;align-items:center;margin-left:12px;">
+                            @foreach($query as $k => $v)
+                                <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+                            @endforeach
+                            <label style="font-size:.88rem;color:#64748b;margin-right:8px;">Halaman</label>
+                            <input type="number" name="page" min="1" max="{{ $last }}" value="{{ $current }}" style="width:80px;padding:6px;border-radius:8px;border:1px solid #e2e8f0;margin-right:8px;">
+                            <button type="submit" class="btn btn-secondary btn-sm">Lompat</button>
+                        </form>
+                    @endif
+
                 </div>
             </div>
         </div>
