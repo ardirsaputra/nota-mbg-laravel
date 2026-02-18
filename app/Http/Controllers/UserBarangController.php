@@ -32,7 +32,7 @@ class UserBarangController extends Controller
         $kategori = $request->get('kategori', '');
 
         // User's own list
-        $query = HargaBarangPokok::where('user_id', $user->id);
+        $query = HargaBarangPokok::forUser($user->id);
         if ($search) {
             $query->where('uraian', 'like', "%{$search}%");
         }
@@ -42,7 +42,7 @@ class UserBarangController extends Controller
         $my_barang = $query->orderBy('kategori')->orderBy('uraian')->get();
 
         // Admin global list (for copy)
-        $globalQuery = HargaBarangPokok::whereNull('user_id');
+        $globalQuery = HargaBarangPokok::forUser(null);
         if ($search) {
             $globalQuery->where('uraian', 'like', "%{$search}%");
         }
@@ -72,16 +72,16 @@ class UserBarangController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'uraian'         => 'required|string|max:255',
-            'kategori'       => 'required|string|max:100',
-            'satuan'         => 'required|string|max:50',
-            'nilai_satuan'   => 'required|numeric|min:0',
-            'harga_satuan'   => 'required|integer|min:0',
-            'profit_per_unit'=> 'nullable|integer|min:0',
+            'uraian' => 'required|string|max:255',
+            'kategori' => 'required|string|max:100',
+            'satuan' => 'required|string|max:50',
+            'nilai_satuan' => 'required|numeric|min:0',
+            'harga_satuan' => 'required|integer|min:0',
+            'profit_per_unit' => 'nullable|integer|min:0',
         ]);
 
         // Check for duplicate in user's list
-        $exists = HargaBarangPokok::where('user_id', $user->id)
+        $exists = HargaBarangPokok::forUser($user->id)
             ->whereRaw('LOWER(uraian) = ?', [strtolower($validated['uraian'])])
             ->exists();
 
@@ -102,15 +102,15 @@ class UserBarangController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'barang_id'       => 'required|integer',
+            'barang_id' => 'required|integer',
             'profit_per_unit' => 'nullable|integer|min:0',
         ]);
 
-        $global = HargaBarangPokok::whereNull('user_id')
+        $global = HargaBarangPokok::forUser(null)
             ->findOrFail($request->barang_id);
 
         // Prevent duplicate
-        $exists = HargaBarangPokok::where('user_id', $user->id)
+        $exists = HargaBarangPokok::forUser($user->id)
             ->whereRaw('LOWER(uraian) = ?', [strtolower($global->uraian)])
             ->exists();
 
@@ -120,13 +120,13 @@ class UserBarangController extends Controller
         }
 
         HargaBarangPokok::create([
-            'user_id'        => $user->id,
-            'uraian'         => $global->uraian,
-            'kategori'       => $global->kategori,
-            'satuan'         => $global->satuan,
-            'nilai_satuan'   => $global->nilai_satuan,
-            'harga_satuan'   => $global->harga_satuan,
-            'profit_per_unit'=> $request->profit_per_unit ?? $global->profit_per_unit ?? 0,
+            'user_id' => $user->id,
+            'uraian' => $global->uraian,
+            'kategori' => $global->kategori,
+            'satuan' => $global->satuan,
+            'nilai_satuan' => $global->nilai_satuan,
+            'harga_satuan' => $global->harga_satuan,
+            'profit_per_unit' => $request->profit_per_unit ?? $global->profit_per_unit ?? 0,
         ]);
 
         return redirect()->route('barang-saya.index')
@@ -137,7 +137,7 @@ class UserBarangController extends Controller
     public function edit($id)
     {
         $user = Auth::user();
-        $barang = HargaBarangPokok::where('user_id', $user->id)->findOrFail($id);
+        $barang = HargaBarangPokok::forUser($user->id)->findOrFail($id);
         $kategori_list = $this->loadKategoriList();
 
         return view('barang_saya.edit', compact('barang', 'kategori_list'));
@@ -147,15 +147,15 @@ class UserBarangController extends Controller
     public function update(Request $request, $id)
     {
         $user = Auth::user();
-        $barang = HargaBarangPokok::where('user_id', $user->id)->findOrFail($id);
+        $barang = HargaBarangPokok::forUser($user->id)->findOrFail($id);
 
         $validated = $request->validate([
-            'uraian'         => 'required|string|max:255',
-            'kategori'       => 'required|string|max:100',
-            'satuan'         => 'required|string|max:50',
-            'nilai_satuan'   => 'required|numeric|min:0',
-            'harga_satuan'   => 'required|integer|min:0',
-            'profit_per_unit'=> 'nullable|integer|min:0',
+            'uraian' => 'required|string|max:255',
+            'kategori' => 'required|string|max:100',
+            'satuan' => 'required|string|max:50',
+            'nilai_satuan' => 'required|numeric|min:0',
+            'harga_satuan' => 'required|integer|min:0',
+            'profit_per_unit' => 'nullable|integer|min:0',
         ]);
 
         $barang->update($validated);
@@ -168,7 +168,7 @@ class UserBarangController extends Controller
     public function destroy($id)
     {
         $user = Auth::user();
-        $barang = HargaBarangPokok::where('user_id', $user->id)->findOrFail($id);
+        $barang = HargaBarangPokok::forUser($user->id)->findOrFail($id);
         $name = $barang->uraian;
         $barang->delete();
 

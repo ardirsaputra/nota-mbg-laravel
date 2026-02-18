@@ -209,11 +209,9 @@ class NotaController extends Controller
         $authUser = Auth::user();
 
         // Per-user barang list: admin sees global (user_id IS NULL), user sees their own
-        if ($authUser && $authUser->isAdmin()) {
-            $barang_list = HargaBarangPokok::whereNull('user_id')->orderBy('uraian')->get();
-        } else {
-            $barang_list = HargaBarangPokok::where('user_id', Auth::id())->orderBy('uraian')->get();
-        }
+        $barang_list = HargaBarangPokok::forUser($authUser && $authUser->isAdmin() ? null : Auth::id())
+            ->orderBy('uraian')
+            ->get();
 
         $satuan_list = \App\Models\Satuan::orderBy('nama_satuan')->get();
 
@@ -385,11 +383,9 @@ class NotaController extends Controller
         $authUser = Auth::user();
 
         // Per-user barang list: admin sees global, user sees their own
-        if ($authUser && $authUser->isAdmin()) {
-            $barang_list = HargaBarangPokok::whereNull('user_id')->orderBy('uraian')->get();
-        } else {
-            $barang_list = HargaBarangPokok::where('user_id', Auth::id())->orderBy('uraian')->get();
-        }
+        $barang_list = HargaBarangPokok::forUser($authUser && $authUser->isAdmin() ? null : Auth::id())
+            ->orderBy('uraian')
+            ->get();
 
         $satuan_list = \App\Models\Satuan::orderBy('nama_satuan')->get();
         try {
@@ -546,12 +542,8 @@ class NotaController extends Controller
 
             // Update master price if requested — scoped to the user's own list
             if ($updateHarga) {
-                $query = HargaBarangPokok::where('uraian', $uraian);
-                if ($isAdmin) {
-                    $query->whereNull('user_id');
-                } else {
-                    $query->where('user_id', Auth::id());
-                }
+                $query = HargaBarangPokok::where('uraian', $uraian)
+                    ->forUser($isAdmin ? null : Auth::id());
                 $barang = $query->first();
 
                 $updateData = [
