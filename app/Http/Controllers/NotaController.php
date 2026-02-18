@@ -322,10 +322,11 @@ class NotaController extends Controller
             $createData['alamat_toko_manual'] = $validated['alamat_toko_manual'] ?? null;
         }
 
-        $nota = Nota::create($createData);
-
-        // Save items if provided
-        $this->saveNotaItems($nota, array_merge($validated, ['update_harga' => $updateHarga]));
+        $nota = null;
+        DB::transaction(function () use (&$nota, $createData, $validated, $updateHarga) {
+            $nota = Nota::create($createData);
+            $this->saveNotaItems($nota, array_merge($validated, ['update_harga' => $updateHarga]));
+        });
 
         return redirect()->route('nota.show', $nota->id)->with('status', 'created');
     }
@@ -454,10 +455,10 @@ class NotaController extends Controller
             $updateData['alamat_toko_manual'] = $validated['alamat_toko_manual'] ?? null;
         }
 
-        $nota->update($updateData);
-
-        // Save items if provided
-        $this->saveNotaItems($nota, $validated);
+        DB::transaction(function () use ($nota, $updateData, $validated) {
+            $nota->update($updateData);
+            $this->saveNotaItems($nota, $validated);
+        });
 
         return redirect()->route('nota.show', $id)->with('status', 'updated');
     }
@@ -489,14 +490,18 @@ class NotaController extends Controller
             'profit_per_unit' => 'nullable|integer',
         ]);
 
-        NotaItem::create([
+        $itemData = [
             'nota_id' => $nota->id,
             'uraian' => $validated['uraian'],
             'satuan' => $validated['satuan'],
             'qty' => $validated['qty'],
             'harga_satuan' => $validated['harga_satuan'],
-            'profit_per_unit' => $validated['profit_per_unit'] ?? 0,
-        ]);
+        ];
+        if (Schema::hasColumn('nota_items', 'profit_per_unit')) {
+            $itemData['profit_per_unit'] = $validated['profit_per_unit'] ?? 0;
+        }
+
+        NotaItem::create($itemData);
 
         $nota->calculateTotal();
 
@@ -520,15 +525,23 @@ class NotaController extends Controller
 
     private function saveNotaItems(Nota $nota, array $validated)
     {
-        // Clear existing items for update operation
-        $nota->items()->delete();
-
         $uraianArray = $validated['uraian'] ?? [];
         $qtyArray = $validated['qty'] ?? [];
         $hargaArray = $validated['harga'] ?? [];
         $satuanArray = $validated['satuan'] ?? [];
         $profitArray = $validated['profit_per_unit'] ?? [];
         $updateHarga = $validated['update_harga'] ?? false;
+
+        // Safety guard: if no valid uraian was submitted (e.g. JS failed to append
+        // hidden inputs), keep existing items unchanged instead of deleting them.
+        $hasValidItems = !empty(array_filter($uraianArray, fn($u) => trim((string) $u) !== ''));
+        if (!$hasValidItems) {
+            $nota->calculateTotal();
+            return;
+        }
+
+        // Clear existing items for update operation
+        $nota->items()->delete();
 
         /** @var \App\Models\User|null $authUser */
         $authUser = Auth::user();
@@ -550,15 +563,20 @@ class NotaController extends Controller
             $profitPerUnitForRow = isset($profitArray[$i]) ? intval($profitArray[$i]) : 0;
 
             // Create nota item (qty/harga may be zero or negative)
-            NotaItem::create([
+            $notaItemData = [
                 'nota_id' => $nota->id,
                 'uraian' => $uraian,
                 'satuan' => $satuan,
                 'qty' => $qty,
                 'harga_satuan' => $harga,
                 'subtotal' => $qty * $harga,
-                'profit_per_unit' => $profitPerUnitForRow,
-            ]);
+            ];
+            // only include profit_per_unit if the column exists on the nota_items table
+            if (Schema::hasColumn('nota_items', 'profit_per_unit')) {
+                $notaItemData['profit_per_unit'] = $profitPerUnitForRow;
+            }
+
+            NotaItem::create($notaItemData);
 
             // Update master price if requested — scoped to the user's own list
             if ($updateHarga) {
@@ -570,7 +588,7 @@ class NotaController extends Controller
                     'harga_satuan' => $harga,
                     'satuan' => $satuan,
                 ];
-                if ($profitPerUnitForRow > 0) {
+                if ($profitPerUnitForRow > 0 && Schema::hasColumn('harga_barang_pokok', 'profit_per_unit')) {
                     $updateData['profit_per_unit'] = $profitPerUnitForRow;
                 }
 
@@ -755,15 +773,18 @@ class NotaController extends Controller
 
         // Clone all items
         foreach ($originalNota->items as $item) {
-            NotaItem::create([
+            $cloneItem = [
                 'nota_id' => $clonedNota->id,
                 'uraian' => $item->uraian,
                 'satuan' => $item->satuan,
                 'qty' => $item->qty,
                 'harga_satuan' => $item->harga_satuan,
                 'subtotal' => $item->subtotal,
-                'profit_per_unit' => $item->profit_per_unit ?? 0,
-            ]);
+            ];
+            if (Schema::hasColumn('nota_items', 'profit_per_unit')) {
+                $cloneItem['profit_per_unit'] = $item->profit_per_unit ?? 0;
+            }
+            NotaItem::create($cloneItem);
         }
 
         $clonedNota->calculateTotal();

@@ -169,6 +169,24 @@
 
         if (u) {
             sel.value = u;
+            // If uraian is not in barangList options (e.g. deleted from master list or
+            // created in a previous session), inject it as an ad-hoc option so the
+            // item is not silently dropped when the form is saved.
+            if (sel.value !== u) {
+                const tmpOpt = document.createElement("option");
+                tmpOpt.value = u;
+                tmpOpt.setAttribute("data-harga", h);
+                tmpOpt.setAttribute("data-satuan", s || "Kg");
+                tmpOpt.setAttribute("data-profit", p || 0);
+                tmpOpt.textContent =
+                    u +
+                    (h
+                        ? " (Rp " + Number(h).toLocaleString("id-ID") + ")"
+                        : "");
+                // insert right after the empty placeholder option
+                sel.insertBefore(tmpOpt, sel.options[1] || null);
+                sel.value = u;
+            }
             const opt = sel.options[sel.selectedIndex];
             const satuanFromOpt = opt
                 ? opt.getAttribute("data-satuan") || "Kg"
