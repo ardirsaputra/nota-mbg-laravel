@@ -194,10 +194,11 @@ Route::middleware(['auth'])->group(function () {
             $settingsDir = $publicStorage . DIRECTORY_SEPARATOR . 'settings';
             $settingsDir2 = $publicStorage . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'settings';
             $settingsDir3 = $publicStorage . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'settings';
+            $settingsDir4 = storage_path('app/public/settings');
 
             $files = [];
             $seen = [];
-            foreach ([$settingsDir, $settingsDir2, $settingsDir3] as $dirIndex => $dir) {
+            foreach ([$settingsDir, $settingsDir2, $settingsDir3, $settingsDir4] as $dirIndex => $dir) {
                 if (!is_dir($dir)) continue;
                 foreach (new \DirectoryIterator($dir) as $f) {
                     if (!$f->isFile()) continue;
@@ -211,7 +212,10 @@ Route::middleware(['auth'])->group(function () {
                         $publicUrl = asset('storage/settings/' . rawurlencode($name));
                     } elseif ($dirIndex === 1) {
                         $publicUrl = asset('storage/public/settings/' . rawurlencode($name));
+                    } elseif ($dirIndex === 2) {
+                        $publicUrl = asset('storage/app/public/settings/' . rawurlencode($name));
                     } else {
+                        // file is under storage/app/public — many hosts still serve via /storage/app/public/
                         $publicUrl = asset('storage/app/public/settings/' . rawurlencode($name));
                     }
 
