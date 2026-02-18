@@ -312,7 +312,7 @@
                 auditBtn.addEventListener('click', function() {
                     auditBtn.disabled = true;
                     auditBtn.innerText = 'Checking...';
-                    fetch('{{ route('admin.storage-audit') }}', {
+                    fetch('{{ url('/admin/storage-audit') }}', {
                             credentials: 'same-origin',
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest'
@@ -337,7 +337,7 @@
                     if (!confirm('Sinkronkan file dari storage/app/public ke public/storage?')) return;
                     syncBtn.disabled = true;
                     syncBtn.innerText = 'Syncing...';
-                    fetch('{{ route('admin.storage-sync') }}', {
+                    fetch('{{ url('/admin/storage-sync') }}', {
                             credentials: 'same-origin'
                         })
                         .then(function(r) {
