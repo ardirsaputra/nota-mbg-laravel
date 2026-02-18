@@ -37,6 +37,7 @@ class SettingController extends Controller
             'address_2' => 'nullable|string',
             // Nota & direktur
             'director_name' => 'nullable|string|max:255',
+            'nota_number_start' => 'nullable|integer|min:1',
             'nota_notes' => 'nullable|array',
             'nota_notes.*' => 'nullable|string|max:255',
             'operating_hours' => 'nullable|array',
@@ -64,9 +65,12 @@ class SettingController extends Controller
         Setting::set('address', $validated['address'] ?? '');
         Setting::set('address_2', $validated['address_2'] ?? '');
 
-        // Direktur & catatan nota
+        // Direktur, catatan nota & penomoran
         Setting::set('director_name', $validated['director_name'] ?? '');
         Setting::set('nota_notes', $validated['nota_notes'] ?? []);
+        if (!empty($validated['nota_number_start'])) {
+            Setting::set('nota_number_start', (int) $validated['nota_number_start']);
+        }
 
         // Update JSON settings
         if (isset($validated['operating_hours'])) {

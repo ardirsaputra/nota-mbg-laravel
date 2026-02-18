@@ -201,7 +201,9 @@ class NotaController extends Controller
         // Generate nomor nota otomatis
         $today = date('Y-m-d');
         $count = Nota::whereDate('tanggal', $today)->count() + 1;
-        $id = Nota::max('id') + 1;
+        $maxId = (int) Nota::max('id');
+        $startFrom = (int) Setting::get('nota_number_start', 1);
+        $id = max($maxId + 1, $startFrom);
         $no = $id . '-' . date('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
         // provide master lists for client-side UI

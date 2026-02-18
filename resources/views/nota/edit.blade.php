@@ -768,7 +768,7 @@
         @endphp
         <script>
             const barangList = @json($barang_list);
-            const satuanList = @json($satuan_list);
+            const satuanList = {!! json_encode($satuan_list->map->nama_satuan) !!};
             const initialItems = @json($initialItems);
             // All authenticated users can add to their own barang list
             window.canCreateMasterBarang = true;

@@ -81,6 +81,15 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="nota_number_start">Mulai Nomor Nota (ID awal)</label>
+                        <input type="number" id="nota_number_start" name="nota_number_start" class="form-control"
+                            value="{{ old('nota_number_start', App\Models\Setting::get('nota_number_start', 1)) }}"
+                            min="1" step="1" style="max-width:180px">
+                        <small class="text-muted">Nomor urut nota akan dimulai dari angka ini jika lebih besar dari nomor
+                            terakhir di database. Berguna saat migrasi dari sistem manual.</small>
+                    </div>
+
+                    <div class="form-group">
                         <label>Catatan Nota (maks. 5 baris)</label>
                         @php
                             $currentNotaNotes = App\Models\Setting::get('nota_notes', [
