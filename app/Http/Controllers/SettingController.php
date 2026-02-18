@@ -12,7 +12,12 @@ class SettingController extends Controller
 {
     public function edit()
     {
-        $galleries = Gallery::ordered()->get();
+        // Defensive: if migrations haven't been run on the server the galleries table may not exist
+        if (\Illuminate\Support\Facades\Schema::hasTable('galleries')) {
+            $galleries = Gallery::ordered()->get();
+        } else {
+            $galleries = collect();
+        }
 
         return view('settings.edit', compact('galleries'));
     }
@@ -42,7 +47,7 @@ class SettingController extends Controller
         ]);
 
         // Ensure public storage link exists before handling uploads
-        if (($request->hasFile('company_logo') || $request->hasFile('hero_image')) && ! $this->ensureStorageLinked()) {
+        if (($request->hasFile('company_logo') || $request->hasFile('hero_image')) && !$this->ensureStorageLinked()) {
             return redirect()->route('settings.edit')
                 ->with('error', 'Folder public/storage belum tersedia — jalankan "php artisan storage:link" terlebih dahulu.');
         }
@@ -79,22 +84,35 @@ class SettingController extends Controller
         // Handle company logo upload
         if ($request->hasFile('company_logo')) {
             $oldLogo = Setting::get('company_logo');
-            if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
-                Storage::disk('public')->delete($oldLogo);
+            // try delete from storage disk and public/storage fallback
+            if ($oldLogo) {
+                if (Storage::disk('public')->exists($oldLogo)) {
+                    Storage::disk('public')->delete($oldLogo);
+                }
+                $publicOld = public_path('storage/' . $oldLogo);
+                if (file_exists($publicOld)) {
+                    @unlink($publicOld);
+                }
             }
 
-            $path = $request->file('company_logo')->store('settings', 'public');
+            $path = $this->saveUploadedPublicFile($request->file('company_logo'), 'settings');
             Setting::set('company_logo', $path, 'image');
         }
 
         // Handle hero image upload
         if ($request->hasFile('hero_image')) {
             $oldImage = Setting::get('hero_image');
-            if ($oldImage && Storage::disk('public')->exists($oldImage)) {
-                Storage::disk('public')->delete($oldImage);
+            if ($oldImage) {
+                if (Storage::disk('public')->exists($oldImage)) {
+                    Storage::disk('public')->delete($oldImage);
+                }
+                $publicOld = public_path('storage/' . $oldImage);
+                if (file_exists($publicOld)) {
+                    @unlink($publicOld);
+                }
             }
 
-            $path = $request->file('hero_image')->store('settings', 'public');
+            $path = $this->saveUploadedPublicFile($request->file('hero_image'), 'settings');
             Setting::set('hero_image', $path, 'image');
         }
 
@@ -108,12 +126,12 @@ class SettingController extends Controller
             'title' => 'nullable|string|max:255',
         ]);
 
-        if (! $this->ensureStorageLinked()) {
+        if (!$this->ensureStorageLinked()) {
             return redirect()->route('settings.edit')
                 ->with('error', 'Folder public/storage belum tersedia — jalankan "php artisan storage:link" terlebih dahulu.');
         }
 
-        $path = $request->file('image')->store('gallery', 'public');
+        $path = $this->saveUploadedPublicFile($request->file('image'), 'gallery');
 
         $maxOrder = Gallery::max('order') ?? 0;
 
@@ -128,8 +146,14 @@ class SettingController extends Controller
 
     public function deleteGallery(Gallery $gallery)
     {
+        // delete from storage disk
         if (Storage::disk('public')->exists($gallery->image_path)) {
             Storage::disk('public')->delete($gallery->image_path);
+        }
+        // delete from public/storage fallback
+        $publicPath = public_path('storage/' . $gallery->image_path);
+        if (file_exists($publicPath)) {
+            @unlink($publicPath);
         }
 
         $gallery->delete();
@@ -144,14 +168,76 @@ class SettingController extends Controller
     private function ensureStorageLinked(): bool
     {
         $link = public_path('storage');
-        if (file_exists($link)) return true;
+        if (file_exists($link))
+            return true;
+
+        // If hosting restricts access outside htdocs (open_basedir), avoid touching storage_path()
+        $src = storage_path('app/public');
+        $openBasedir = ini_get('open_basedir');
+        $srcAccessible = true;
+        if ($openBasedir) {
+            // split and sanitize entries — skip empty entries and any containing null bytes
+            $allowed = array_filter(array_map('trim', explode(PATH_SEPARATOR, $openBasedir)), fn($s) => $s !== '' && strpos($s, "\0") === false);
+            $realSrc = @realpath($src);
+            $srcAccessible = false;
+            if ($realSrc) {
+                foreach ($allowed as $a) {
+                    // skip entries that can't be resolved or contain null bytes
+                    if ($a === '' || strpos($a, "\0") !== false) {
+                        continue;
+                    }
+                    $realA = @realpath($a);
+                    if ($realA && strpos($realSrc, $realA) === 0) {
+                        $srcAccessible = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // If storage_path is not accessible on this host, create public/storage and return (no symlink possible)
+        if (!$srcAccessible) {
+            @mkdir($link, 0755, true);
+            return file_exists($link);
+        }
 
         try {
             Artisan::call('storage:link');
             return file_exists($link);
         } catch (\Throwable $e) {
-            return false;
+            // final fallback: try to create the public/storage directory
+            @mkdir($link, 0755, true);
+            return file_exists($link);
         }
+    }
+
+    /**
+     * Save an uploaded file so it's accessible via `asset('storage/...')` even when
+     * `public/storage` is not a symlink (shared hosts with open_basedir).
+     * Returns stored relative path (e.g. "settings/xxx.png").
+     */
+    private function saveUploadedPublicFile($uploadedFile, string $dir): string
+    {
+        $publicStorage = public_path('storage');
+
+        // If public/storage is a symlink to storage/app/public, use the Laravel disk (keeps behavior consistent)
+        $isSymlink = is_link($publicStorage) && @realpath($publicStorage) === @realpath(storage_path('app/public'));
+
+        if ($isSymlink) {
+            return $uploadedFile->store($dir, 'public');
+        }
+
+        // Otherwise write directly into public/storage/<dir>
+        $fileName = $uploadedFile->hashName();
+        $publicDir = public_path('storage/' . $dir);
+        if (!is_dir($publicDir)) {
+            @mkdir($publicDir, 0755, true);
+        }
+
+        // move() will persist the uploaded file into public/storage
+        $uploadedFile->move($publicDir, $fileName);
+
+        return trim($dir . '/' . $fileName, '/');
     }
 
     public function uploadServiceImage(Request $request)
@@ -161,14 +247,14 @@ class SettingController extends Controller
             'service_index' => 'required|integer',
         ]);
 
-        if (! $this->ensureStorageLinked()) {
+        if (!$this->ensureStorageLinked()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Folder public/storage belum tersedia — jalankan "php artisan storage:link" terlebih dahulu.'
             ], 500);
         }
 
-        $path = $request->file('image')->store('services', 'public');
+        $path = $this->saveUploadedPublicFile($request->file('image'), 'services');
 
         return response()->json([
             'success' => true,
