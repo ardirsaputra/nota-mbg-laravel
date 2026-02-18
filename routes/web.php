@@ -9,6 +9,7 @@ use App\Http\Controllers\NotaController;
 use App\Http\Controllers\SatuanController;
 use App\Http\Controllers\TokoController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\UserBarangController;
 
 // Public routes
 Route::get('/', function () {
@@ -97,6 +98,16 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Nota routes (accessible by both admin and user)
+    Route::post('/nota/barang', [NotaController::class, 'storeBarang'])->name('nota.storeBarang');
+
+    // User's own Barang management (accessible to all auth users)
+    Route::get('/barang-saya', [UserBarangController::class, 'index'])->name('barang-saya.index');
+    Route::post('/barang-saya', [UserBarangController::class, 'store'])->name('barang-saya.store');
+    Route::post('/barang-saya/copy', [UserBarangController::class, 'copyFromAdmin'])->name('barang-saya.copy');
+    Route::get('/barang-saya/{id}/edit', [UserBarangController::class, 'edit'])->name('barang-saya.edit');
+    Route::put('/barang-saya/{id}', [UserBarangController::class, 'update'])->name('barang-saya.update');
+    Route::delete('/barang-saya/{id}', [UserBarangController::class, 'destroy'])->name('barang-saya.destroy');
+
     Route::get('/nota', [NotaController::class, 'index'])->name('nota.index');
     Route::get('/nota/create', [NotaController::class, 'create'])->name('nota.create');
     Route::post('/nota', [NotaController::class, 'store'])->name('nota.store');

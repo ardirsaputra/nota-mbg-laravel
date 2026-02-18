@@ -439,6 +439,9 @@
                                 <a href="{{ route('nota.index') }}"
                                     class="{{ request()->routeIs('nota.*') ? 'active' : '' }}"><i
                                         class="fas fa-file-invoice"></i> Nota Saya</a>
+                                <a href="{{ route('barang-saya.index') }}"
+                                    class="{{ request()->routeIs('barang-saya.*') ? 'active' : '' }}"><i
+                                        class="fas fa-box-open"></i> Daftar Barang</a>
                                 <a href="{{ route('profile.edit') }}"
                                     class="{{ request()->routeIs('profile.*') ? 'active' : '' }}"><i
                                         class="fas fa-user-cog"></i> Edit Profil</a>

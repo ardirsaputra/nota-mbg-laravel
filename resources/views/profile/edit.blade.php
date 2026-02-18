@@ -2,167 +2,89 @@
 
 @section('title', 'Edit Profil')
 
-@section('content')
-    <div class="container">
-        <div class="settings-header" style="margin-bottom:18px;">
-            <h1><i class="fas fa-user-cog"></i> Edit Profil</h1>
-            <p>Perbarui informasi akun dan toko Anda </p>
-        </div>
-
-        @if (session('success'))
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i> {{ session('success') }}
-            </div>
-        @endif
-
-        @if ($errors->any())
-            <div class="alert alert-error">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <!-- Tabs (Akun / Toko) -->
-        <div class="settings-tabs" style="margin-bottom:18px;">
-            <button class="tab-btn active" data-tab="account"><i class="fas fa-user"></i> Akun</button>
-            <button class="tab-btn" data-tab="toko"><i class="fas fa-store"></i> Toko</button>
-        </div>
-
-        <form action="{{ route('profile.update') }}" method="POST">
-            @csrf
-            @method('PUT')
-
-            <div class="tab-content active" id="account">
-                <div class="settings-card">
-                    <h2>Informasi Akun</h2>
-
-                    <table class="profile-table">
-                        <tr>
-                            <td class="label">Nama</td>
-                            <td class="input"><input type="text" name="name" value="{{ old('name', $user->name) }}"
-                                    required class="form-control"></td>
-                        </tr>
-
-                        <tr>
-                            <td class="label">Email</td>
-                            <td class="input"><input type="email" name="email" value="{{ old('email', $user->email) }}"
-                                    required class="form-control"></td>
-                        </tr>
-
-                        <tr>
-                            <td class="label">Password <div class="text-muted" style="font-weight:400;">(kosongkan bila
-                                    tidak ingin mengganti)</div>
-                            </td>
-                            <td class="input"><input type="password" name="password" class="form-control"></td>
-                        </tr>
-
-                        <tr>
-                            <td class="label">Konfirmasi Password</td>
-                            <td class="input"><input type="password" name="password_confirmation" class="form-control">
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-
-            <div class="tab-content" id="toko">
-                <div class="settings-card">
-                    <h2>Informasi Toko</h2>
-                    <p class="text-muted">Data toko akan dibuat atau diperbarui untuk toko yang dimiliki pengguna.</p>
-
-                    <table class="profile-table">
-                        <tr>
-                            <td class="label">Nama Toko</td>
-                            <td class="input"><input type="text" name="nama_toko"
-                                    value="{{ old('nama_toko', optional($toko)->nama_toko) }}" class="form-control"></td>
-                        </tr>
-
-                        <tr>
-                            <td class="label">Alamat Toko</td>
-                            <td class="input"><input type="text" name="alamat_toko"
-                                    value="{{ old('alamat_toko', optional($toko)->alamat) }}" class="form-control"></td>
-                        </tr>
-
-                        @if (!$toko)
-                            <tr>
-                                <td class="label">Status Toko</td>
-                                <td class="input"><span class="text-muted">Belum memiliki toko — mengisi data di atas akan
-                                        membuat toko baru terkait akun Anda.</span></td>
-                            </tr>
-                        @endif
-                    </table>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <a href="{{ route('dashboard') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Batal</a>
-                <button class="btn btn-primary" type="submit"><i class="fas fa-save"></i> Simpan Perubahan</button>
-            </div>
-        </form>
-    </div>
-
+@push('styles')
     <style>
-        /* Minimal styles copied from settings view so profile page matches */
+        /* ── Header bar ── */
         .settings-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 22px;
-            border-radius: 12px;
+            color: #fff;
+            padding: 24px 28px;
+            border-radius: 14px;
+            margin-bottom: 22px;
         }
 
-        .settings-card {
-            background: white;
-            border-radius: 12px;
-            padding: 22px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-            margin-bottom: 18px;
+        .settings-header h1 {
+            margin: 0 0 4px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .settings-card h2 {
-            margin: 0 0 18px 0;
-            font-size: 18px;
-            color: #1e293b;
+        .settings-header p {
+            margin: 0;
+            opacity: .85;
+            font-size: .9rem;
         }
 
-        .form-actions {
-            margin-top: 18px;
-            text-align: right;
+        /* ── Alert ── */
+        .alert {
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: .92rem;
         }
 
-        .text-muted {
-            color: #64748b;
-            font-size: 13px;
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border-left: 4px solid #22c55e;
         }
 
-        /* Tab styles copied from settings for consistency */
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert ul {
+            margin: 0;
+            padding-left: 16px;
+        }
+
+        /* ── Underline tabs ── */
         .settings-tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 0;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 22px;
             overflow-x: auto;
-            padding-bottom: 6px;
         }
 
         .tab-btn {
-            padding: 10px 20px;
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
+            padding: 10px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
+            font-size: .95rem;
+            font-weight: 600;
             color: #64748b;
-            transition: all 0.2s;
+            transition: all .2s;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 7px;
         }
 
         .tab-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
+            color: #667eea;
+            border-bottom-color: #667eea;
         }
 
         .tab-content {
@@ -173,46 +95,285 @@
             display: block;
         }
 
-        /* Profile form table */
-        .profile-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0;
+        /* ── Card ── */
+        .settings-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px 28px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .06);
+            margin-bottom: 20px;
         }
 
-        .profile-table td.label {
-            width: 220px;
-            padding: 14px 18px;
-            vertical-align: top;
-            color: #475569;
+        .settings-card .section-title {
+            font-size: 1rem;
             font-weight: 700;
-            font-size: 14px;
+            color: #1e293b;
+            border-left: 4px solid #667eea;
+            padding-left: 12px;
+            margin: 0 0 20px;
         }
 
-        .profile-table td.input {
-            padding: 12px 18px;
+        .text-muted {
+            color: #64748b;
+            font-size: .88rem;
+            margin: -12px 0 18px 16px;
         }
 
-        .profile-table tr+tr td.input {
-            border-top: 1px solid #f1f5f9;
+        /* ── Form grid ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
         }
 
-        @media (max-width: 768px) {
-            .profile-table td.label {
-                display: block;
-                width: 100%;
-                padding: 10px 0 6px 0;
-                font-weight: 700;
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: .8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: #475569;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 10px 13px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: .93rem;
+            transition: border .2s, box-shadow .2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, .15);
+        }
+
+        .form-group .hint {
+            font-size: .77rem;
+            color: #94a3b8;
+        }
+
+        /* ── Sticky save bar ── */
+        .form-actions {
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            border-top: 1px solid #e2e8f0;
+            padding: 14px 0;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            z-index: 100;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: .92rem;
+            text-decoration: none;
+            transition: all .2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            opacity: .9;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        /* ── Toko status pill ── */
+        .toko-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: .82rem;
+            font-weight: 600;
+        }
+
+        .toko-status.new {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .toko-status.edit {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
             }
 
-            .profile-table td.input {
-                display: block;
-                width: 100%;
-                padding: 6px 0 16px 0;
+            .settings-header {
+                border-radius: 10px;
             }
         }
     </style>
+@endpush
 
+@section('content')
+    <div class="container">
+
+        <!-- Header -->
+        <div class="settings-header">
+            <h1><i class="fas fa-user-cog"></i> Edit Profil</h1>
+            <p>Perbarui informasi akun dan toko Anda</p>
+        </div>
+
+        @if (session('success'))
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> {{ session('success') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <!-- Tabs -->
+        <div class="settings-tabs">
+            <button class="tab-btn active" data-tab="account"><i class="fas fa-user"></i> Akun</button>
+            <button class="tab-btn" data-tab="toko"><i class="fas fa-store"></i> Toko</button>
+        </div>
+
+        <form action="{{ route('profile.update') }}" method="POST">
+            @csrf
+            @method('PUT')
+
+            {{-- ── TAB: Akun ── --}}
+            <div class="tab-content active" id="account">
+                <div class="settings-card">
+                    <div class="section-title"><i class="fas fa-user" style="color:#667eea; margin-right:6px;"></i>
+                        Informasi Akun</div>
+
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label for="name">Nama Lengkap *</label>
+                            <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}"
+                                required placeholder="Nama tampilan Anda">
+                        </div>
+
+                        <div class="form-group full">
+                            <label for="email">Alamat Email *</label>
+                            <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}"
+                                required placeholder="email@contoh.com">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="section-title"><i class="fas fa-lock" style="color:#667eea; margin-right:6px;"></i> Ganti
+                        Password</div>
+                    <p class="text-muted">Kosongkan kedua kolom di bawah jika tidak ingin mengganti password.</p>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="password">Password Baru</label>
+                            <input type="password" id="password" name="password" placeholder="Minimal 6 karakter">
+                            <span class="hint">Biarkan kosong agar password tidak berubah</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password_confirmation">Konfirmasi Password</label>
+                            <input type="password" id="password_confirmation" name="password_confirmation"
+                                placeholder="Ulangi password baru">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── TAB: Toko ── --}}
+            <div class="tab-content" id="toko">
+                <div class="settings-card">
+                    <div class="section-title"><i class="fas fa-store" style="color:#667eea; margin-right:6px;"></i>
+                        Informasi Toko</div>
+                    <p class="text-muted">Data toko akan tampil di nota Anda. Mengisi kolom di bawah akan membuat atau
+                        memperbarui toko terkait akun Anda.</p>
+
+                    @if ($toko)
+                        <div style="margin-bottom:16px;">
+                            <span class="toko-status edit">
+                                <i class="fas fa-check-circle"></i> Toko aktif: {{ $toko->nama_toko }}
+                            </span>
+                        </div>
+                    @else
+                        <div style="margin-bottom:16px;">
+                            <span class="toko-status new">
+                                <i class="fas fa-info-circle"></i> Belum memiliki toko — mengisi data di bawah akan membuat
+                                toko baru
+                            </span>
+                        </div>
+                    @endif
+
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label for="nama_toko">Nama Toko</label>
+                            <input type="text" id="nama_toko" name="nama_toko"
+                                value="{{ old('nama_toko', optional($toko)->nama_toko) }}"
+                                placeholder="Contoh: Toko Maju Jaya">
+                        </div>
+
+                        <div class="form-group full">
+                            <label for="alamat_toko">Alamat Toko</label>
+                            <textarea id="alamat_toko" name="alamat_toko" rows="3" placeholder="Jl. Contoh No. 1, Kota...">{{ old('alamat_toko', optional($toko)->alamat) }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sticky save bar -->
+            <div class="form-actions">
+                <a href="{{ route('dashboard') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Batal</a>
+                <button class="btn btn-primary" type="submit"><i class="fas fa-save"></i> Simpan Perubahan</button>
+            </div>
+        </form>
+
+    </div>
+@endsection
+
+@push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tabBtns = document.querySelectorAll('.tab-btn');
@@ -220,15 +381,12 @@
 
             tabBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const targetTab = this.dataset.tab;
-
                     tabBtns.forEach(b => b.classList.remove('active'));
                     tabContents.forEach(c => c.classList.remove('active'));
-
                     this.classList.add('active');
-                    document.getElementById(targetTab).classList.add('active');
+                    document.getElementById(this.dataset.tab).classList.add('active');
                 });
             });
         });
     </script>
-@endsection
+@endpush

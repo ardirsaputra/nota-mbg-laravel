@@ -9,6 +9,7 @@ class HargaBarangPokok extends Model
     protected $table = 'harga_barang_pokok';
 
     protected $fillable = [
+        'user_id',
         'uraian',
         'kategori',
         'satuan',
@@ -16,6 +17,11 @@ class HargaBarangPokok extends Model
         'harga_satuan',
         'profit_per_unit',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     protected $casts = [
         'nilai_satuan' => 'float',

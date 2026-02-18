@@ -372,6 +372,9 @@
                 display: none !important;
             }
 
+            /* hide small UI controls (checkboxes/buttons) from printed nota */
+            .no-print { display: none !important; }
+
             .profit-info {
                 display: none !important;
             }
@@ -477,12 +480,11 @@
             <span id="lockBadgeText">{{ $nota->is_locked ? 'Dikunci' : 'Terbuka' }}</span>
         </span>
 
-        <button type="button" id="btnProfit" class="btn btn-toggle" onclick="toggleProfitInsightView()"
-            title="Toggle Profit Insight">
-            <i class="fas fa-chart-line" id="btnProfitIcon"></i>
-            <span id="btnProfitText"
-                class="btn-text">{{ $nota->profit_insight ? 'Exclude from Profit' : 'Include in Profit' }}</span>
-        </button>
+<label class="btn btn-toggle no-print" id="profitToggleLabel" title="Include in Profit" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+                    <input type="checkbox" id="profitCheckbox" style="width:16px;height:16px;margin:0;" {{ $nota->profit_insight ? 'checked' : '' }} onchange="profitCheckboxChanged(this)">
+                    <i class="fas fa-chart-line" id="profitCheckboxIcon" style="margin-left:6px"></i>
+                    <span id="btnProfitText" class="btn-text" style="margin-left:6px;">{{ $nota->profit_insight ? 'Included in Profit' : 'Excluded from Profit' }}</span>
+                </label>
 
         <button onclick="togglePFColumn()" class="btn btn-toggle">
             <i class="fas fa-eye-slash" id="pfToggleIcon"></i> <span id="pf-toggle-text" class="btn-text">Sembunyikan
@@ -718,13 +720,19 @@
         }
 
         /* ======== PROFIT INSIGHT ======== */
-        function toggleProfitInsightView() {
-            const btn = document.getElementById('btnProfit');
-            const origText = btn ? btn.innerHTML : null;
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-            }
+        function profitCheckboxChanged(chk) {
+            const checkbox = chk || document.getElementById('profitCheckbox');
+            if (!checkbox) return;
+            const label = document.getElementById('profitToggleLabel');
+            const txt = document.getElementById('btnProfitText');
+            const icon = document.getElementById('profitCheckboxIcon');
+            const prevChecked = checkbox.checked;
+
+            // set loading state
+            checkbox.disabled = true;
+            if (label) label.classList.add('loading');
+            const origIconClass = icon ? icon.className : null;
+            if (icon) icon.className = 'fas fa-spinner fa-spin';
 
             fetch(`/nota/${notaId}/toggle-profit`, {
                     method: 'POST',
@@ -736,20 +744,19 @@
                 })
                 .then(r => r.json())
                 .then(data => {
-                    if (btn) {
-                        btn.disabled = false;
-                        if (origText) btn.innerHTML = origText;
-                    }
-                    const txt = document.getElementById('btnProfitText');
-                    if (txt) txt.textContent = data.profit_insight ? 'Exclude from Profit' : 'Include in Profit';
-                    alert(data.message);
+                    checkbox.checked = !!data.profit_insight;
+                    if (txt) txt.textContent = data.profit_insight ? 'Included in Profit' : 'Excluded from Profit';
+                    if (icon && origIconClass) icon.className = origIconClass;
+                    if (label) label.classList.remove('loading');
+                    checkbox.disabled = false;
                 })
                 .catch(err => {
                     console.error(err);
-                    if (btn) {
-                        btn.disabled = false;
-                        if (origText) btn.innerHTML = origText;
-                    }
+                    // revert UI state on error
+                    checkbox.checked = !prevChecked;
+                    if (icon && origIconClass) icon.className = origIconClass;
+                    if (label) label.classList.remove('loading');
+                    checkbox.disabled = false;
                     alert('Terjadi kesalahan: ' + err.message);
                 });
         }

@@ -296,11 +296,12 @@
         const satuanEl = document.getElementById("newSatuan");
         const hargaEl = document.getElementById("newHarga");
         const kategoriEl = document.getElementById("newKategori");
+        const profitEl = document.getElementById("newProfitPerUnit");
         const uraian = (uraianEl?.value || "").trim();
         const satuan = (satuanEl?.value || "").trim();
-        const nilai = 1; // default nilai_satuan removed from UI, keep server requirement
         const harga = parseInt(hargaEl?.value) || 0;
         const kategori = (kategoriEl?.value || "Umum").trim();
+        const profitPerUnit = parseInt(profitEl?.value) || 0;
         const uraianError = document.getElementById("uraianError");
         if (uraianError) {
             uraianError.style.display = "none";
@@ -319,7 +320,8 @@
             )
         ) {
             if (uraianError) {
-                uraianError.textContent = "Barang sudah ada";
+                uraianError.textContent =
+                    "Barang sudah ada dalam daftar harga Anda";
                 uraianError.style.display = "block";
             }
             return;
@@ -337,15 +339,15 @@
             uraian: uraian,
             kategori: kategori,
             satuan: satuan,
-            nilai_satuan: nilai,
             harga_satuan: harga,
+            profit_per_unit: profitPerUnit,
         };
 
         const modal = document.getElementById("addBarangModal");
         const form = document.getElementById("addBarangForm");
 
-        // Try AJAX POST to create master record
-        fetch("/harga-barang-pokok", {
+        // Try AJAX POST to create master record (use per-user endpoint if set)
+        fetch(window.barangStoreUrl || "/harga-barang-pokok", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

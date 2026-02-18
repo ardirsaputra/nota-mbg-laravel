@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Barang Pokok')
+@section('title', 'Edit Barang Saya')
 
 @push('styles')
     <style>
@@ -37,7 +37,7 @@
             border-radius: 8px;
             margin-bottom: 16px;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 10px;
             font-size: .92rem;
         }
@@ -48,13 +48,8 @@
             border-left: 4px solid #ef4444;
         }
 
-        .alert ul {
-            margin: 0;
-            padding-left: 16px;
-        }
-
         .form-card {
-            max-width: 820px;
+            max-width: 780px;
             margin: 0 auto 32px;
             background: #fff;
             border-radius: 14px;
@@ -188,38 +183,41 @@
 
         <div class="page-header-bar">
             <div>
-                <h1><i class="fas fa-plus-circle"></i> Tambah Barang Pokok</h1>
-                <p>Tambahkan data barang baru ke daftar harga master</p>
+                <h1><i class="fas fa-edit"></i> Edit Barang</h1>
+                <p>Perbarui data barang dalam daftar harga Anda</p>
             </div>
-            <a href="{{ route('harga-barang-pokok.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i>
-                Kembali</a>
+            <a href="{{ route('barang-saya.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Kembali</a>
         </div>
 
         @if ($errors->any())
-            <div class="alert alert-error" style="max-width:820px; margin: 0 auto 16px;">
+            <div class="alert alert-error">
                 <i class="fas fa-exclamation-circle"></i>
-                <ul>
-                    @foreach ($errors->all() as $e)
-                        <li>{{ $e }}</li>
+                <div>
+                    @foreach ($errors->all() as $err)
+                        <div>{{ $err }}</div>
                     @endforeach
-                </ul>
+                </div>
             </div>
         @endif
 
         <div class="form-card">
             <div class="form-card-header">
-                <div class="section-title"><i class="fas fa-box" style="color:#667eea;"></i> Data Barang</div>
+                <div class="section-title">
+                    <i class="fas fa-box" style="color:#667eea;"></i>
+                    Data Barang: <em style="font-style:normal; color:#667eea;">{{ $barang->uraian }}</em>
+                </div>
             </div>
 
-            <form action="{{ route('harga-barang-pokok.store') }}" method="POST">
+            <form action="{{ route('barang-saya.update', $barang->id) }}" method="POST">
                 @csrf
+                @method('PUT')
 
                 <div class="form-body">
                     <div class="form-grid">
                         <div class="form-group full">
-                            <label for="uraian">Nama Barang / Uraian *</label>
-                            <input type="text" id="uraian" name="uraian" value="{{ old('uraian') }}"
-                                placeholder="Contoh: Beras Premium" required>
+                            <label for="uraian">Nama Barang *</label>
+                            <input type="text" id="uraian" name="uraian" value="{{ old('uraian', $barang->uraian) }}"
+                                required>
                         </div>
 
                         <div class="form-group">
@@ -227,8 +225,10 @@
                             <select id="kategori" name="kategori" required>
                                 <option value="">Pilih Kategori</option>
                                 @foreach ($kategori_list as $kat)
-                                    <option value="{{ $kat }}" {{ old('kategori') == $kat ? 'selected' : '' }}>
-                                        {{ $kat }}</option>
+                                    <option value="{{ $kat }}"
+                                        {{ old('kategori', $barang->kategori) == $kat ? 'selected' : '' }}>
+                                        {{ $kat }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -238,8 +238,10 @@
                             <select id="satuan" name="satuan" required>
                                 <option value="">Pilih Satuan</option>
                                 @foreach (['Kg', 'Gram', 'Liter', 'Ml', 'Pcs', 'Pack', 'Dus', 'Karung', 'Ball'] as $s)
-                                    <option value="{{ $s }}" {{ old('satuan') == $s ? 'selected' : '' }}>
-                                        {{ $s }}</option>
+                                    <option value="{{ $s }}"
+                                        {{ old('satuan', $barang->satuan) == $s ? 'selected' : '' }}>
+                                        {{ $s }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -247,29 +249,29 @@
                         <div class="form-group">
                             <label for="nilai_satuan">Nilai Satuan *</label>
                             <input type="number" step="0.01" id="nilai_satuan" name="nilai_satuan"
-                                value="{{ old('nilai_satuan', 1) }}" required>
+                                value="{{ old('nilai_satuan', $barang->nilai_satuan) }}" required>
                             <span class="hint">Contoh: 1 Kg=1 · 500 Gram=0.5 · 1 Liter=1</span>
                         </div>
 
                         <div class="form-group">
                             <label for="harga_satuan">Harga Satuan (Rp) *</label>
-                            <input type="number" id="harga_satuan" name="harga_satuan" value="{{ old('harga_satuan') }}"
-                                required placeholder="0">
+                            <input type="number" id="harga_satuan" name="harga_satuan"
+                                value="{{ old('harga_satuan', $barang->harga_satuan) }}" required>
                         </div>
 
                         <div class="form-group">
                             <label for="profit_per_unit">Keuntungan per Satuan (Rp)</label>
                             <input type="number" id="profit_per_unit" name="profit_per_unit"
-                                value="{{ old('profit_per_unit', 0) }}" min="0" placeholder="0">
+                                value="{{ old('profit_per_unit', $barang->profit_per_unit ?? 0) }}" min="0">
                             <span class="hint">Opsional — keuntungan tetap per unit dalam nota</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Barang</button>
-                    <a href="{{ route('harga-barang-pokok.index') }}" class="btn btn-secondary"><i
-                            class="fas fa-times"></i> Batal</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Perubahan</button>
+                    <a href="{{ route('barang-saya.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i>
+                        Batal</a>
                 </div>
             </form>
         </div>

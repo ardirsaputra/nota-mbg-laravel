@@ -77,7 +77,11 @@ class NotaController extends Controller
             }
         }
 
-        $notas = $query->get();
+        // compute aggregate total for all matching notas (used in stats)
+        $totalSum = (clone $query)->sum('total');
+
+        // paginate — 50 items per page
+        $notas = $query->paginate(50)->withQueryString();
 
         // Get all toko for filter dropdown
         $toko_list = Toko::orderBy('nama_toko')->get();
@@ -125,7 +129,50 @@ class NotaController extends Controller
             $nota->estimated_profit = (int) $estimated_profit;
         }
 
-        return view('nota.index', compact('notas', 'filter', 'toko_filter', 'toko_list', 'tanggalFrom', 'tanggalTo'));
+        // --- Calculate global "included" profit summary (only notas with profit_insight = true)
+        $includedEstimatedProfit = 0;
+        $includedCount = 0;
+        $includedNotas = Nota::with('items')->where('profit_insight', true)->get();
+        if ($includedNotas->count() > 0) {
+            // build master profit lookup for included notas
+            $uraianIncluded = [];
+            foreach ($includedNotas as $n) {
+                foreach ($n->items as $it) {
+                    if (!empty($it->uraian)) $uraianIncluded[] = $it->uraian;
+                }
+            }
+            $uraianIncluded = array_values(array_unique($uraianIncluded));
+            $masterProfitsIncluded = [];
+            if (!empty($uraianIncluded)) {
+                $masterProfitsIncluded = HargaBarangPokok::whereIn('uraian', $uraianIncluded)
+                    ->get()
+                    ->pluck('profit_per_unit', 'uraian')
+                    ->toArray();
+            }
+
+            foreach ($includedNotas as $n) {
+                $sumForNota = 0;
+                foreach ($n->items as $it) {
+                    $qty = (float) $it->qty;
+                    $harga = (int) $it->harga_satuan;
+
+                    if (!empty($it->profit_per_unit) && (int)$it->profit_per_unit > 0) {
+                        $ppu = (int) $it->profit_per_unit;
+                    } elseif (!empty($masterProfitsIncluded[$it->uraian]) && (int)$masterProfitsIncluded[$it->uraian] > 0) {
+                        $ppu = (int) $masterProfitsIncluded[$it->uraian];
+                    } else {
+                        $percent = $this->profitPercentForPrice($harga);
+                        $ppu = (int) ($harga * ($percent / 100));
+                    }
+
+                    $sumForNota += ($ppu * $qty);
+                }
+                $includedEstimatedProfit += $sumForNota;
+            }
+            $includedCount = $includedNotas->count();
+        }
+
+        return view('nota.index', compact('notas', 'filter', 'toko_filter', 'toko_list', 'tanggalFrom', 'tanggalTo', 'includedEstimatedProfit', 'includedCount', 'totalSum'));
     }
 
     public function create()
@@ -137,13 +184,22 @@ class NotaController extends Controller
         $no =  $id . '-' . date('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
         // provide master lists for client-side UI
-        $barang_list = HargaBarangPokok::orderBy('uraian')->get();
-        $satuan_list = \App\Models\Satuan::orderBy('nama_satuan')->get();
-
-        // Toko only for admin
         /** @var \App\Models\User|null $authUser */
         $authUser = Auth::user();
 
+        // Per-user barang list: admin sees global (user_id IS NULL), user sees their own
+        if ($authUser && $authUser->isAdmin()) {
+            $barang_list = HargaBarangPokok::whereNull('user_id')->orderBy('uraian')->get();
+        } else {
+            $barang_list = HargaBarangPokok::where('user_id', Auth::id())->orderBy('uraian')->get();
+        }
+
+        $satuan_list = \App\Models\Satuan::orderBy('nama_satuan')->get();
+
+        // Load categories from JSON file + distinct from DB
+        $kategori_list = $this->loadKategoriList();
+
+        // Toko only for admin
         if ($authUser && $authUser->isAdmin()) {
             $toko_list = Toko::orderBy('nama_toko')->get();
         } else {
@@ -151,7 +207,7 @@ class NotaController extends Controller
             $toko_list = Toko::where('user_id', Auth::id())->orderBy('nama_toko')->get();
         }
 
-        return view('nota.create', compact('no', 'barang_list', 'satuan_list', 'toko_list'));
+        return view('nota.create', compact('no', 'barang_list', 'satuan_list', 'toko_list', 'kategori_list'));
     }
 
     /**
@@ -289,11 +345,21 @@ class NotaController extends Controller
         // Access control
         $this->ensureCanAccessNota($nota);
 
-        $barang_list = HargaBarangPokok::orderBy('uraian')->get();
+        /** @var \App\Models\User|null $authUser */
+        $authUser = Auth::user();
+
+        // Per-user barang list: admin sees global, user sees their own
+        if ($authUser && $authUser->isAdmin()) {
+            $barang_list = HargaBarangPokok::whereNull('user_id')->orderBy('uraian')->get();
+        } else {
+            $barang_list = HargaBarangPokok::where('user_id', Auth::id())->orderBy('uraian')->get();
+        }
+
         $satuan_list = \App\Models\Satuan::orderBy('nama_satuan')->get();
         $toko_list = Toko::orderBy('nama_toko')->get();
+        $kategori_list = $this->loadKategoriList();
 
-        return view('nota.edit', compact('nota', 'barang_list', 'satuan_list', 'toko_list'));
+        return view('nota.edit', compact('nota', 'barang_list', 'satuan_list', 'toko_list', 'kategori_list'));
     }
 
     public function update(Request $request, $id)
@@ -404,6 +470,10 @@ class NotaController extends Controller
         $profitArray = $validated['profit_per_unit'] ?? [];
         $updateHarga = $validated['update_harga'] ?? false;
 
+        /** @var \App\Models\User|null $authUser */
+        $authUser = Auth::user();
+        $isAdmin = $authUser && $authUser->isAdmin();
+
         $count = count($uraianArray);
         for ($i = 0; $i < $count; $i++) {
             $uraian = trim($uraianArray[$i] ?? '');
@@ -415,10 +485,6 @@ class NotaController extends Controller
             if (empty($uraian)) {
                 continue;
             }
-
-            // Coerce numeric defaults (allow zero/negative values)
-            $qty = $qty;
-            $harga = $harga;
 
             // Determine profit per unit for this row (if provided)
             $profitPerUnitForRow = isset($profitArray[$i]) ? intval($profitArray[$i]) : 0;
@@ -434,25 +500,103 @@ class NotaController extends Controller
                 'profit_per_unit' => $profitPerUnitForRow,
             ]);
 
-            // Update master price if requested and item exists in HargaBarangPokok
+            // Update master price if requested — scoped to the user's own list
             if ($updateHarga) {
-                $barang = HargaBarangPokok::where('uraian', $uraian)->first();
+                $query = HargaBarangPokok::where('uraian', $uraian);
+                if ($isAdmin) {
+                    $query->whereNull('user_id');
+                } else {
+                    $query->where('user_id', Auth::id());
+                }
+                $barang = $query->first();
+
+                $updateData = [
+                    'harga_satuan' => $harga,
+                    'satuan'       => $satuan,
+                ];
+                if ($profitPerUnitForRow > 0) {
+                    $updateData['profit_per_unit'] = $profitPerUnitForRow;
+                }
+
                 if ($barang) {
-                    $updateData = [
-                        'harga_satuan' => $harga,
-                        'satuan' => $satuan,
-                    ];
-                    // also update master profit if supplied
-                    if ($profitPerUnitForRow > 0) {
-                        $updateData['profit_per_unit'] = $profitPerUnitForRow;
-                    }
                     $barang->update($updateData);
+                } else {
+                    // Create new entry scoped to this user
+                    HargaBarangPokok::create(array_merge($updateData, [
+                        'uraian'      => $uraian,
+                        'kategori'    => 'Umum',
+                        'nilai_satuan' => 1,
+                        'user_id'     => $isAdmin ? null : Auth::id(),
+                    ]));
                 }
             }
         }
 
         // Recalculate total
         $nota->calculateTotal();
+    }
+
+    /**
+     * AJAX: Store a new barang to the current user's price list.
+     * Admin → user_id = null (global). Regular user → user_id = their id.
+     */
+    public function storeBarang(Request $request)
+    {
+        $validated = $request->validate([
+            'uraian'         => 'required|string|max:255',
+            'kategori'       => 'required|string|max:100',
+            'satuan'         => 'required|string|max:50',
+            'harga_satuan'   => 'required|integer|min:1',
+            'profit_per_unit' => 'nullable|integer|min:0',
+        ]);
+
+        /** @var \App\Models\User|null $authUser */
+        $authUser = Auth::user();
+        $userId = ($authUser && $authUser->isAdmin()) ? null : Auth::id();
+
+        // Check duplicate within the same user's list
+        $existing = HargaBarangPokok::where('uraian', $validated['uraian'])
+            ->when($userId === null, fn($q) => $q->whereNull('user_id'), fn($q) => $q->where('user_id', $userId))
+            ->first();
+
+        if ($existing) {
+            return response()->json(['status' => 'error', 'message' => 'Barang sudah ada dalam daftar harga Anda'], 422);
+        }
+
+        $barang = HargaBarangPokok::create([
+            'user_id'        => $userId,
+            'uraian'         => $validated['uraian'],
+            'kategori'       => $validated['kategori'],
+            'satuan'         => $validated['satuan'],
+            'nilai_satuan'   => 1,
+            'harga_satuan'   => $validated['harga_satuan'],
+            'profit_per_unit' => $validated['profit_per_unit'] ?? 0,
+        ]);
+
+        return response()->json([
+            'status' => 'ok',
+            'data' => [
+                'id'             => $barang->id,
+                'uraian'         => $barang->uraian,
+                'kategori'       => $barang->kategori,
+                'satuan'         => $barang->satuan,
+                'harga_satuan'   => $barang->harga_satuan,
+                'profit_per_unit' => $barang->profit_per_unit ?? 0,
+            ],
+        ]);
+    }
+
+    /**
+     * Load the category list from JSON file + distinct DB values.
+     */
+    private function loadKategoriList(): array
+    {
+        $file = storage_path('app/categories.json');
+        $fromFile = file_exists($file) ? (json_decode(file_get_contents($file), true) ?? []) : [];
+        $fromDb = HargaBarangPokok::distinct()->orderBy('kategori')->pluck('kategori')->filter()->values()->toArray();
+        $merged = array_values(array_unique(array_merge($fromFile, $fromDb)));
+        sort($merged);
+        return $merged ?: ['Umum'];
     }
 
     public function toggleLock(Request $request, $id)
@@ -553,6 +697,7 @@ class NotaController extends Controller
                 'qty' => $item->qty,
                 'harga_satuan' => $item->harga_satuan,
                 'subtotal' => $item->subtotal,
+                'profit_per_unit' => $item->profit_per_unit ?? 0,
             ]);
         }
 

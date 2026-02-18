@@ -4,67 +4,114 @@
 
 @push('styles')
     <style>
-        /* Enhanced input sizing & visual polish for Nota edit - matching create */
-        .form-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(12, 33, 55, 0.06);
+        /* ===== PAGE LAYOUT ===== */
+        .form-page {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
+        /* ===== CARD ===== */
+        .form-card {
+            background: #fff;
+            padding: 24px 28px;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(12, 33, 55, 0.07);
+        }
+
+        /* ===== HEADER ===== */
         .form-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .form-header h2 {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-header h2 i {
+            color: #667eea;
+        }
+
+        .form-header-actions {
+            display: flex;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
+        /* ===== SECTION TITLES ===== */
+        .section-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #94a3b8;
+            margin: 20px 0 12px;
+            padding-left: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        /* ===== FORM GRID ===== */
         .form-row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 14px;
         }
 
         .form-row.full {
-            flex-direction: column;
+            grid-template-columns: 1fr;
         }
 
         .form-group {
-            flex: 1;
-            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
 
         .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: #374151;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.35px;
         }
 
         .form-group input,
         .form-group textarea,
         .form-group select {
             width: 100%;
-            padding: 12px 14px;
-            font-size: 1rem;
-            border-radius: 10px;
-            border: 1px solid #e6eef6;
-            background: #fbfdff;
-            line-height: 1.2;
-            transition: box-shadow .12s, border-color .12s;
-            min-height: 44px;
+            padding: 10px 13px;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            border: 1.5px solid #e2e8f0;
+            background: #f9fafb;
+            color: #1e293b;
+            transition: border-color .15s, box-shadow .15s, background .15s;
+            box-sizing: border-box;
+            min-height: 42px;
         }
 
         .form-group textarea {
-            min-height: 120px;
+            min-height: 80px;
             resize: vertical;
         }
 
         .form-group input::placeholder,
         .search-box input::placeholder {
-            color: #9aa6b2;
+            color: #b0bec5;
         }
 
         .form-group input:focus,
@@ -72,46 +119,116 @@
         .form-group select:focus,
         .search-box input:focus {
             outline: none;
-            border-color: #6b9cff;
-            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.08);
-            background: #ffffff;
-        }
-
-        .items-section {
-            padding: 14px;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
             background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 6px 20px rgba(2, 6, 23, 0.03);
-            margin-top: 12px;
         }
 
-        .search-box {
-            position: relative;
+        .form-group input[readonly],
+        .form-group textarea[readonly] {
+            background: #f1f5f9;
+            color: #64748b;
+            cursor: default;
+        }
+
+        /* ===== ALERT ===== */
+        .nota-alert {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .nota-alert.success {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+
+        .nota-alert.danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .nota-alert ul {
+            margin: 6px 0 0 16px;
+            padding: 0;
+            font-weight: 500;
+        }
+
+        /* ===== ITEMS SECTION ===== */
+        .items-section {
+            margin-top: 20px;
+            padding: 18px 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1.5px solid #e9eef5;
+        }
+
+        .items-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .items-toolbar-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .items-toolbar-title i {
+            color: #667eea;
+        }
+
+        .items-toolbar-actions {
             display: flex;
             gap: 8px;
             align-items: center;
             flex-wrap: wrap;
         }
 
-        .search-box input {
-            width: 100%;
-            max-width: 480px;
-            padding: 12px 14px;
-            border-radius: 10px;
-            border: 1px solid #e6eef6;
-            font-size: 1rem;
+        /* Search box */
+        .search-box {
+            position: relative;
         }
 
-        /* search results */
+        .search-box input {
+            width: 280px;
+            padding: 9px 13px;
+            border-radius: 8px;
+            border: 1.5px solid #e2e8f0;
+            font-size: 0.88rem;
+            background: #fff;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+        }
+
         .search-results {
             position: absolute;
-            top: 46px;
+            top: calc(100% + 4px);
             left: 0;
             right: 0;
             background: #fff;
-            border: 1px solid #e6eef6;
-            border-radius: 8px;
-            box-shadow: 0 8px 30px rgba(2, 6, 23, 0.06);
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgba(2, 6, 23, 0.09);
             z-index: 1200;
             max-height: 260px;
             overflow: auto;
@@ -119,180 +236,312 @@
         }
 
         .search-item {
-            padding: 8px 12px;
+            padding: 9px 13px;
             cursor: pointer;
-            border-bottom: 1px solid #f5f7fb;
-            font-weight: 700;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #334155;
         }
 
         .search-item:hover,
         .search-item.active {
-            background: #f1f5ff;
+            background: #eef2ff;
+            color: #4f46e5;
         }
 
         .search-item.add-new {
-            color: #0b76a8;
-            font-weight: 800;
+            color: #0284c7;
+            font-weight: 700;
         }
 
-        .item-form input,
-        .item-form select {
-            padding: 10px 12px;
-            font-size: 0.95rem;
-            border-radius: 8px;
-            min-height: 44px;
+        .search-item:last-child {
+            border-bottom: none;
         }
 
-        .item-form select {
-            min-width: 160px;
+        /* ===== TABLE ===== */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 10px;
         }
 
         .items-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 420px;
+            min-width: 520px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
-        .items-table th,
+        .items-table thead tr {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .items-table th {
+            padding: 10px 12px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #fff;
+            text-align: left;
+            white-space: nowrap;
+        }
+
         .items-table td {
-            padding: 12px 14px;
+            padding: 8px 10px;
             vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
         }
 
-        /* proportional sizing for item-row controls */
+        .items-table tbody tr:hover {
+            background: #fafbff;
+        }
+
+        .items-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* item inputs */
         .items-table .barang-select {
             width: 100%;
-            min-width: 220px;
-            max-width: 560px;
-            padding: 10px 12px;
-            font-size: 0.95rem;
-            border-radius: 8px;
-            border: 1px solid #e6eef6;
-            background: #fbfdff;
-            min-height: 42px;
+            min-width: 200px;
+            max-width: 480px;
+            padding: 8px 10px;
+            font-size: 0.88rem;
+            border-radius: 7px;
+            border: 1.5px solid #e2e8f0;
+            background: #f9fafb;
+            min-height: 38px;
         }
 
         .items-table .satuan-select {
-            width: 96px;
-            max-width: 120px;
-            padding: 10px 12px;
-            font-size: 0.95rem;
-            border-radius: 8px;
-            border: 1px solid #e6eef6;
-            background: #fbfdff;
-            min-height: 42px;
-        }
-
-        .items-table .barang-select:focus,
-        .items-table .satuan-select:focus {
-            outline: none;
-            border-color: #6b9cff;
-            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
-            background: #ffffff;
+            width: 90px;
+            padding: 8px 10px;
+            font-size: 0.88rem;
+            border-radius: 7px;
+            border: 1.5px solid #e2e8f0;
+            background: #f9fafb;
+            min-height: 38px;
         }
 
         .items-table .qty {
-            width: 92px;
-            padding: 10px 12px;
-            font-size: 0.95rem;
-            border-radius: 8px;
-            border: 1px solid #e6eef6;
-            background: #fbfdff;
-            min-height: 42px;
+            width: 80px;
+            padding: 8px 10px;
+            font-size: 0.88rem;
+            border-radius: 7px;
+            border: 1.5px solid #e2e8f0;
+            background: #f9fafb;
+            min-height: 38px;
+            text-align: right;
+        }
+
+        .items-table .profit-per-unit {
+            width: 110px;
+            padding: 8px 10px;
+            font-size: 0.88rem;
+            border-radius: 7px;
+            border: 1.5px solid #e2e8f0;
+            background: #f9fafb;
+            min-height: 38px;
+            text-align: right;
         }
 
         .items-table .harga {
-            width: 140px;
-            padding: 10px 12px;
-            font-size: 0.95rem;
-            border-radius: 8px;
-            border: 1px solid #e6eef6;
-            background: #fbfdff;
-            min-height: 42px;
+            width: 130px;
+            padding: 8px 10px;
+            font-size: 0.88rem;
+            border-radius: 7px;
+            border: 1.5px solid #e2e8f0;
+            background: #f9fafb;
+            min-height: 38px;
+            text-align: right;
         }
 
+        .items-table .barang-select:focus,
+        .items-table .satuan-select:focus,
         .items-table .qty:focus,
+        .items-table .profit-per-unit:focus,
         .items-table .harga:focus {
             outline: none;
-            border-color: #6b9cff;
-            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
-            background: #ffffff;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: #fff;
         }
 
         .items-table .subtotal {
-            font-weight: 700;
+            font-weight: 800;
             white-space: nowrap;
             text-align: right;
+            color: #0f172a;
+            font-size: 0.88rem;
         }
 
         .items-table .btn-remove {
-            padding: 6px 8px;
-            border-radius: 6px;
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1.5px solid #fecaca;
+            padding: 5px 8px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background .15s;
         }
 
-        .items-table input[type=number] {
-            text-align: right;
+        .items-table .btn-remove:hover {
+            background: #fee2e2;
         }
 
-        /* highlight missing uraian */
+        /* error row */
         tr.missing-uraian td {
             background: #fff5f5;
-            border-left: 4px solid #f8d7da;
         }
 
         tr.missing-uraian .barang-select {
-            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.06);
+            border-color: #f87171;
+            box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
         }
 
-        .table-responsive {
-            overflow: auto;
+        /* ===== TOTAL BAR ===== */
+        .items-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .update-harga-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+        }
+
+        .update-harga-label input[type=checkbox] {
+            width: 16px;
+            height: 16px;
+            accent-color: #667eea;
         }
 
         .total-section {
-            text-align: right;
             display: flex;
-            gap: 16px;
             align-items: center;
-            justify-content: flex-end;
+            gap: 10px;
         }
 
         .total-label {
-            color: #667;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b;
         }
 
         .total-amount {
-            font-weight: 800;
             font-size: 1.2rem;
+            font-weight: 900;
+            color: #1e293b;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
+        /* ===== FORM ACTIONS (sticky) ===== */
         .form-actions {
+            position: sticky;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
+            padding: 12px 0;
+            border-top: 1.5px solid #e2e8f0;
+            margin-top: 16px;
             display: flex;
-            gap: 8px;
+            gap: 10px;
             justify-content: flex-end;
-            margin-top: 14px;
+            z-index: 100;
         }
 
-        @media(max-width:720px) {
-            .items-table {
-                min-width: 320px;
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        .modal-dialog {
+            border-radius: 14px;
+            padding: 22px 26px;
+            box-shadow: 0 20px 60px rgba(2, 6, 23, 0.2);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px 13px;
+            border-radius: 8px;
+            border: 1.5px solid #e2e8f0;
+            font-size: 0.9rem;
+            background: #f9fafb;
+            box-sizing: border-box;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+            background: #fff;
+        }
+
+        .modal-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.35px;
+        }
+
+        /* ===== DRAG HANDLE ===== */
+        .drag-handle-item {
+            color: #cbd5e1;
+            cursor: grab;
+            font-size: 14px;
+        }
+
+        .drag-handle-item:active {
+            cursor: grabbing;
+        }
+
+        tr.dragging {
+            opacity: .45;
+        }
+
+        tr.drag-over {
+            outline: 2px dashed #667eea;
+            background: #eef2ff;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 720px) {
+            .form-card {
+                padding: 16px;
             }
 
             .form-row {
-                flex-direction: column;
-            }
-
-            .form-group {
-                min-width: 100%;
-            }
-
-            .item-form {
-                flex-direction: column;
-                align-items: stretch
+                grid-template-columns: 1fr;
             }
 
             .search-box input {
-                max-width: 100%;
+                width: 100%;
+            }
+
+            .items-toolbar {
+                flex-direction: column;
+            }
+
+            .items-toolbar-actions {
+                width: 100%;
             }
         }
     </style>
@@ -302,34 +551,35 @@
     <div class="container">
         {{-- Success/Error Messages --}}
         @if (session('status'))
-            <div class="alert alert-success"
-                style="background: #d4edda; color: #155724; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #c3e6cb;">
+            <div class="nota-alert success">
+                <i class="fas fa-check-circle"></i>
                 @if (session('status') == 'updated')
-                    <i class="fas fa-check-circle"></i> Nota berhasil diperbarui!
+                    Nota berhasil diperbarui!
                 @elseif(session('status') == 'item_added')
-                    <i class="fas fa-plus-circle"></i> Item berhasil ditambahkan!
+                    Item berhasil ditambahkan!
                 @elseif(session('status') == 'item_deleted')
-                    <i class="fas fa-trash"></i> Item berhasil dihapus!
+                    Item berhasil dihapus!
                 @endif
             </div>
         @endif
 
         @if ($errors->any())
-            <div class="alert alert-danger"
-                style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #f5c6cb;">
-                <i class="fas fa-exclamation-triangle"></i> <strong>Terdapat kesalahan:</strong>
-                <ul style="margin: 8px 0 0 20px; padding: 0;">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+            <div class="nota-alert danger">
+                <div>
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Terdapat kesalahan:</strong>
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
             </div>
         @endif
 
         <div class="form-card">
             <div class="form-header">
                 <h2><i class="fas fa-edit"></i> Edit Nota {{ $nota->no }}</h2>
-                <div style="display:flex;gap:8px;">
+                <div class="form-header-actions">
                     <a href="{{ route('nota.show', $nota->id) }}" class="btn btn-secondary"><i class="fas fa-eye"></i>
                         Lihat</a>
                     <a href="{{ route('nota.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i>
@@ -341,18 +591,20 @@
                 @csrf
                 @method('PUT')
 
+                <div class="section-title">Informasi Nota</div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="no">No Nota</label>
                         <input type="text" id="no" name="no" value="{{ old('no', $nota->no) }}" required>
                     </div>
                     <div class="form-group">
-                        <label for="tanggal">Tanggal <span style="color: red">*</span></label>
+                        <label for="tanggal">Tanggal <span style="color:#ef4444">*</span></label>
                         <input type="date" id="tanggal" name="tanggal"
                             value="{{ old('tanggal', $nota->tanggal ? $nota->tanggal->format('Y-m-d') : '') }}" required>
                     </div>
                 </div>
 
+                <div class="section-title">Informasi Toko / Pembeli</div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="toko_selection">Pilih Toko</label>
@@ -371,11 +623,8 @@
                         </select>
                         <input type="hidden" id="toko_id" name="toko_id" value="{{ old('toko_id', $nota->toko_id) }}">
                     </div>
-                </div>
-
-                <div class="form-row">
                     <div class="form-group">
-                        <label for="nama_toko">Nama Toko <span style="color: red">*</span></label>
+                        <label for="nama_toko">Nama Toko <span style="color:#ef4444">*</span></label>
                         <input type="text" id="nama_toko" name="nama_toko" placeholder="Masukkan nama toko"
                             value="{{ old('nama_toko', $nota->nama_toko) }}" required>
                         <input type="hidden" id="nama_toko_manual" name="nama_toko_manual"
@@ -393,53 +642,49 @@
                 </div>
 
                 <div class="items-section">
-                    <h3>
-                        <span>Daftar Barang</span>
-                        <div style="display:flex;gap:10px;align-items:center">
-                            <div style="position:relative;">
-                                <div class="search-box">
-                                    <input type="search" id="itemSearch"
-                                        placeholder="Cari barang... ketik lalu tekan Enter atau klik hasil"
-                                        autocomplete="off">
-                                </div>
+                    <div class="items-toolbar">
+                        <div class="items-toolbar-title"><i class="fas fa-list"></i> Daftar Barang</div>
+                        <div class="items-toolbar-actions">
+                            <div class="search-box">
+                                <input type="search" id="itemSearch" placeholder="Cari barang dan tekan Enter…"
+                                    autocomplete="off">
                                 <div id="searchResults" class="search-results"></div>
                             </div>
-                            <button type="button" class="btn btn-primary" onclick="addRow()"><i class="fas fa-plus"></i>
-                                Tambah Barang</button>
+                            <button type="button" class="btn btn-primary" onclick="addRow()">
+                                <i class="fas fa-plus"></i> Tambah Baris
+                            </button>
                         </div>
-                    </h3>
-
-
+                    </div>
 
                     <div class="table-responsive">
                         <table class="items-table" id="itemsTable">
                             <thead>
                                 <tr>
-                                    <th style="width:40px">No</th>
-                                    <th style="width:36px"></th>
+                                    <th style="width:36px">No</th>
+                                    <th style="width:28px"></th>
                                     <th>Barang</th>
                                     <th>Satuan</th>
                                     <th>Qty</th>
-                                    <th style="width:140px">Keuntungan/Satuan (Rp)</th>
+                                    <th>Keuntungan/Sat.</th>
                                     <th>Harga Satuan</th>
                                     <th>Subtotal</th>
-                                    <th>Aksi</th>
+                                    <th style="width:36px"></th>
                                 </tr>
                             </thead>
                             <tbody id="itemsBody"></tbody>
                         </table>
                     </div>
 
-                    <div
-                        style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:12px;">
+                    <div class="items-footer">
                         <div>
-                            <label style="font-weight:600;">
-                                <input type="checkbox" name="update_harga" value="1"> Perbarui harga master barang
+                            <label class="update-harga-label">
+                                <input type="checkbox" name="update_harga" value="1">
+                                Perbarui harga master barang
                             </label>
                         </div>
                         <div class="total-section">
-                            <div class="total-label">Total Nota:</div>
-                            <div class="total-amount" id="totalAmount">Rp 0</div>
+                            <span class="total-label">Total Nota</span>
+                            <span class="total-amount" id="totalAmount">Rp 0</span>
                         </div>
                     </div>
                 </div>
@@ -452,54 +697,55 @@
         </div>
     </div>
 
-    <!-- Add Barang Modal (moved out of nota form to prevent accidental parent-form submit) -->
+    <!-- Add Barang Modal -->
     <div id="addBarangModal" class="modal-overlay"
         style="display:none; position:fixed; inset:0;align-items:center;justify-content:center;z-index:1500;">
-        <div class="modal-dialog"
-            style="width:720px;max-width:96%;background:#fff;border-radius:12px;padding:18px;box-shadow:0 20px 60px rgba(2,6,23,0.2);">
+        <div class="modal-dialog" style="width:640px;max-width:96%;background:#fff;">
             <button class="modal-close" aria-label="Tutup"
                 onclick="document.getElementById('addBarangModal').style.display='none'"
-                style="float:right;border:none;background:transparent;font-size:22px;">&times;</button>
-            <h3 style="margin:0 0 8px;"><i class="fas fa-plus-circle" style="color:#2ecc71;margin-right:8px"></i> Tambah
-                Barang Baru</h3>
+                style="float:right;border:none;background:transparent;font-size:22px;cursor:pointer;">&times;</button>
+            <h3
+                style="margin:0 0 16px;font-size:1rem;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:8px;">
+                <i class="fas fa-plus-circle" style="color:#22c55e"></i> Tambah Barang ke Daftar Harga
+            </h3>
             <form id="addBarangForm" onsubmit="event.preventDefault(); submitNewBarang();"
-                style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+                style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div style="grid-column:1 / -1;">
-                    <label style="display:block;margin-bottom:6px;font-weight:700">Uraian</label>
-                    <input id="newUraian" name="uraian" type="text" placeholder="Nama barang"
-                        style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;" required>
-                    <div id="uraianError" style="color:#c0392b;display:none;margin-top:6px;font-size:0.9rem"></div>
+                    <label class="modal-label">Uraian / Nama Barang</label>
+                    <input id="newUraian" name="uraian" type="text" placeholder="Nama barang" class="modal-input"
+                        required>
+                    <div id="uraianError" style="color:#dc2626;display:none;margin-top:6px;font-size:0.85rem"></div>
                 </div>
-
                 <div>
-                    <label style="display:block;margin-bottom:6px;font-weight:700">Satuan</label>
-                    <select id="newSatuan" name="satuan"
-                        style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;">
+                    <label class="modal-label">Satuan</label>
+                    <select id="newSatuan" name="satuan" class="modal-input">
                         @foreach ($satuan_list as $s)
                             <option value="{{ $s->nama_satuan }}">{{ $s->nama_satuan }}</option>
                         @endforeach
                     </select>
                 </div>
-
                 <div>
-                    <label style="display:block;margin-bottom:6px;font-weight:700">Kategori</label>
-                    <input id="newKategori" name="kategori" type="text" value="Umum"
-                        placeholder="Kategori (mis. Umum)"
-                        style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;">
+                    <label class="modal-label">Kategori</label>
+                    <select id="newKategori" name="kategori" class="modal-input">
+                        @foreach ($kategori_list as $kat)
+                            <option value="{{ $kat }}">{{ $kat }}</option>
+                        @endforeach
+                    </select>
                 </div>
-
                 <div>
-                    <label style="display:block;margin-bottom:6px;font-weight:700">Harga Satuan (Rp)</label>
+                    <label class="modal-label">Harga Satuan (Rp)</label>
                     <input id="newHarga" name="harga_satuan" type="number" step="1" value="0"
-                        style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;">
+                        class="modal-input" style="text-align:right;">
                 </div>
-
-
-
-                <div style="grid-column:1 / -1;text-align:right;margin-top:6px;">
+                <div>
+                    <label class="modal-label">Keuntungan / Satuan (Rp)</label>
+                    <input id="newProfitPerUnit" name="profit_per_unit" type="number" step="1" value="0"
+                        class="modal-input" style="text-align:right;" placeholder="0 = auto-hitung">
+                </div>
+                <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:10px;margin-top:4px;">
                     <button type="button" class="btn btn-secondary"
                         onclick="document.getElementById('addBarangModal').style.display='none'">Batal</button>
-                    <button type="submit" class="btn btn-success">Simpan dan Tambah ke Nota</button>
+                    <button type="submit" class="btn btn-success">Simpan &amp; Tambah ke Nota</button>
                 </div>
             </form>
         </div>
@@ -524,6 +770,9 @@
             const barangList = @json($barang_list);
             const satuanList = @json($satuan_list);
             const initialItems = @json($initialItems);
+            // All authenticated users can add to their own barang list
+            window.canCreateMasterBarang = true;
+            window.barangStoreUrl = '{{ route('nota.storeBarang') }}';
 
             // Toko selection handler
             document.addEventListener('DOMContentLoaded', function() {
