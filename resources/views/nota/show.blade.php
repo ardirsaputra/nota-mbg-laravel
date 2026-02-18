@@ -3,6 +3,8 @@
 @section('title', 'Nota ' . $nota->no)
 
 @push('styles')
+    <!-- headline font for company title -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;800;900&display=swap" rel="stylesheet">
     <style>
         /* ====== TOOLBAR ====== */
         .nota-toolbar {
@@ -155,21 +157,45 @@
             position: relative;
             border: 1px solid #000;
             overflow: hidden;
+            /* make invoice text thicker */
+            font-weight: 600;
+            color: #111;
         }
 
-        .nota::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 420px;
-            height: 420px;
-            background: url("https://ik.imagekit.io/arsdevahliaja/logo-mja.png") no-repeat center;
-            background-size: contain;
-            opacity: 0.07;
-            transform: translate(-50%, -50%);
-            z-index: 0;
+        /* emphasize title and totals */
+        .nota .judul h1 {
+            font-weight: 900;
+            letter-spacing: 1px;
         }
+
+        table.data th {
+            font-weight: 700;
+        }
+
+        table.data td {
+            font-weight: 600;
+        }
+
+        table.data tr:last-child td {
+            font-weight: 800;
+        }
+
+        @php $__logo = App\Models\Setting::get('company_logo'); @endphp
+        @if ($__logo)
+            .nota::before {
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 420px;
+                height: 420px;
+                background: url('{{ asset('storage/' . $__logo) }}') no-repeat center;
+                background-size: contain;
+                opacity: 0.07;
+                transform: translate(-50%, -50%);
+                z-index: 0;
+            }
+        @endif
 
         .content {
             position: relative;
@@ -208,6 +234,8 @@
             margin: 0;
             font-size: 22px;
             letter-spacing: 1px;
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* weight handled by .nota .judul h1 */
         }
 
         .judul p {
@@ -249,9 +277,10 @@
             border: 1px solid #000;
         }
 
+        /* compact item padding */
         table.data th,
         table.data td {
-            padding: 3px;
+            padding: 2px 6px;
         }
 
         table.data th {
@@ -264,6 +293,7 @@
         }
 
         table.data td:nth-child(1) {
+            text-align: center;
             width: 5%;
         }
 
@@ -282,13 +312,13 @@
         table.data td:nth-child(5) {
             width: 12%;
             text-align: right;
-            padding-right: 8px;
+            padding-right: 6px;
         }
 
         table.data td:nth-child(6) {
             width: 12%;
             text-align: right;
-            padding-right: 8px;
+            padding-right: 6px;
         }
 
         table.data td:nth-child(7) {
@@ -297,7 +327,7 @@
 
         table.data tr:last-child td {
             text-align: right;
-            padding-right: 8px;
+            padding-right: 6px;
         }
 
         .pf-column {
@@ -569,7 +599,7 @@
                 @foreach ($nota->items as $i => $it)
                     <tr>
                         <td>{{ $i + 1 }}</td>
-                        <td style="text-align:left;padding-left:8px;">{{ $it->uraian }}</td>
+                        <td style="text-align:center;">{{ $it->uraian }}</td>
                         <td>{{ $it->qty }}</td>
                         <td>{{ $it->satuan ?? '-' }}</td>
                         <td>{{ number_format($it->harga_satuan, 0, ',', '.') }}</td>

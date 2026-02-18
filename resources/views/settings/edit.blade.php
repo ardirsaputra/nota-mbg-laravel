@@ -282,18 +282,20 @@
                 <div class="settings-card">
                     <h2>Informasi Kontak</h2>
 
-                    <div class="form-group">
-                        <label for="phone_1">Telepon 1</label>
-                        <input type="text" id="phone_1" name="phone_1" class="form-control"
-                            value="{{ old('phone_1', App\Models\Setting::get('phone_1', '')) }}"
-                            placeholder="0812-3456-7890">
-                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="phone_1">Telepon 1</label>
+                            <input type="text" id="phone_1" name="phone_1" class="form-control"
+                                value="{{ old('phone_1', App\Models\Setting::get('phone_1', '')) }}"
+                                placeholder="0812-3456-7890">
+                        </div>
 
-                    <div class="form-group">
-                        <label for="phone_2">Telepon 2</label>
-                        <input type="text" id="phone_2" name="phone_2" class="form-control"
-                            value="{{ old('phone_2', App\Models\Setting::get('phone_2', '')) }}"
-                            placeholder="0813-9876-5432">
+                        <div class="form-group">
+                            <label for="phone_2">Telepon 2</label>
+                            <input type="text" id="phone_2" name="phone_2" class="form-control"
+                                value="{{ old('phone_2', App\Models\Setting::get('phone_2', '')) }}"
+                                placeholder="0813-9876-5432">
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -325,21 +327,23 @@
                         );
                     @endphp
 
-                    @foreach ($days as $day)
-                        <div class="form-group">
-                            <label for="operating_{{ $day }}">{{ $day }}</label>
-                            <input type="text" id="operating_{{ $day }}"
-                                name="operating_hours[{{ $day }}]" class="form-control"
-                                value="{{ $operatingHours[$day] ?? '' }}" placeholder="08:00 - 17:00 atau Tutup">
-                        </div>
-                    @endforeach
+                    <div class="hours-grid">
+                        @foreach ($days as $day)
+                            <div class="form-group">
+                                <label for="operating_{{ $day }}">{{ $day }}</label>
+                                <input type="text" id="operating_{{ $day }}"
+                                    name="operating_hours[{{ $day }}]" class="form-control"
+                                    value="{{ $operatingHours[$day] ?? '' }}" placeholder="08:00 - 17:00 atau Tutup">
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
 
             <!-- Tab: Gallery (dipindahkan ke bawah untuk menghindari nested form) -->
 
             <div class="form-actions">
-                <button type="submit" class="btn-primary">
+                <button type="submit" class="btn-save">
                     <i class="fas fa-save"></i> Simpan Perubahan
                 </button>
             </div>
@@ -373,11 +377,11 @@
         </div>
 
         <!-- Form Upload Galeri (di luar form utama) -->
-        <div class="settings-card" style="margin-top: 20px;">
-            <h3>Tambah Foto ke Galeri</h3>
+        <div class="gallery-upload-card">
+            <h3><i class="fas fa-upload" style="margin-right:8px;color:#667eea"></i>Tambah Foto ke Galeri</h3>
             <form action="{{ route('settings.gallery.upload') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <div class="form-row">
+                <div class="gallery-upload-row">
                     <div class="form-group">
                         <label for="gallery_title">Judul (opsional)</label>
                         <input type="text" id="gallery_title" name="title" class="form-control">
@@ -387,7 +391,7 @@
                         <input type="file" id="gallery_image" name="image" class="form-control" accept="image/*"
                             required>
                     </div>
-                    <button type="submit" class="btn-secondary">
+                    <button type="submit" class="btn-upload">
                         <i class="fas fa-upload"></i> Upload
                     </button>
                 </div>
@@ -396,76 +400,94 @@
     </div>
 
     <style>
-        .settings-container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 0 20px;
-        }
-
+        /* ===== HEADER ===== */
         .settings-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 22px 28px;
             border-radius: 12px;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
         }
 
         .settings-header h1 {
-            margin: 0 0 10px 0;
-            font-size: 28px;
+            margin: 0 0 4px 0;
+            font-size: 21px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .settings-header p {
             margin: 0;
-            opacity: 0.9;
+            opacity: 0.85;
+            font-size: 13px;
         }
 
-        .alert {
-            padding: 15px 20px;
+        /* ===== ALERT ===== */
+        .alert-success {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+            padding: 13px 18px;
             border-radius: 8px;
             margin-bottom: 20px;
+            font-size: 14px;
         }
 
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
+        /* ===== TABS ===== */
         .settings-tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 0;
+            margin-bottom: 24px;
             overflow-x: auto;
-            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .settings-tabs::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .settings-tabs::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
         }
 
         .tab-btn {
-            padding: 12px 24px;
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 11px 18px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 13px;
+            font-weight: 600;
             color: #64748b;
-            transition: all 0.3s;
+            transition: color 0.2s, border-color 0.2s, background 0.2s;
             white-space: nowrap;
         }
 
         .tab-btn:hover {
-            border-color: #667eea;
             color: #667eea;
+            border-bottom-color: #a5b4fc;
+            background: #f8f9ff;
         }
 
         .tab-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: transparent;
         }
 
         .tab-btn i {
-            margin-right: 8px;
+            font-size: 12px;
         }
 
         .tab-content {
@@ -476,105 +498,159 @@
             display: block;
         }
 
+        /* ===== CARDS ===== */
         .settings-card {
             background: white;
             border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 26px 28px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
             margin-bottom: 20px;
         }
 
         .settings-card h2 {
-            margin: 0 0 20px 0;
-            font-size: 22px;
+            margin: 0 0 22px 0;
+            font-size: 16px;
+            font-weight: 700;
             color: #1e293b;
+            padding-left: 12px;
+            border-left: 4px solid #667eea;
         }
 
         .settings-card h3 {
-            margin: 30px 0 15px 0;
-            font-size: 18px;
+            margin: 26px 0 14px 0;
+            font-size: 12px;
+            font-weight: 700;
             color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f1f5f9;
         }
 
         .settings-card h4 {
-            margin: 20px 0 15px 0;
-            font-size: 16px;
-            color: #475569;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f1f5f9;
+            margin: 18px 0 12px 0;
+            font-size: 12px;
+            font-weight: 700;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: none;
+        }
+
+        /* ===== FORM ===== */
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #334155;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 12px;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.35px;
         }
 
         .form-control {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
+            padding: 10px 14px;
+            border: 1.5px solid #e2e8f0;
             border-radius: 8px;
             font-size: 14px;
-            transition: border-color 0.3s;
+            color: #1e293b;
+            background: #fafafa;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
         }
 
         .form-control:focus {
             outline: none;
             border-color: #667eea;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
         }
 
-        .form-control small {
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        small {
             display: block;
             margin-top: 5px;
-            color: #64748b;
-            font-size: 12px;
+            color: #94a3b8;
+            font-size: 11.5px;
+            line-height: 1.4;
         }
 
+        .text-muted {
+            color: #94a3b8;
+            font-size: 13px;
+            margin: -10px 0 18px 0;
+        }
+
+        /* ===== IMAGE PREVIEW ===== */
         .current-image {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             border-radius: 8px;
             overflow: hidden;
-            border: 2px solid #e2e8f0;
-            max-width: 300px;
+            border: 1.5px solid #e2e8f0;
+            max-width: 200px;
+            background: #f8fafc;
         }
 
         .current-image img {
             width: 100%;
-            height: auto;
+            height: 100px;
+            object-fit: contain;
             display: block;
+            padding: 8px;
+            box-sizing: border-box;
         }
 
-        .text-muted {
-            color: #64748b;
-            font-size: 14px;
-        }
-
+        /* ===== FEATURE & SERVICE ITEMS ===== */
         .feature-item,
         .service-item {
-            padding: 20px;
+            padding: 18px 20px;
             background: #f8fafc;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid #667eea;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 14px;
         }
 
+        /* ===== OPERATING HOURS ===== */
+        .hours-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+            gap: 12px;
+        }
+
+        .hours-grid .form-group {
+            margin-bottom: 0;
+        }
+
+        /* ===== GALLERY ===== */
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 14px;
+            margin-top: 14px;
         }
 
         .gallery-item {
             position: relative;
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
             aspect-ratio: 1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .gallery-item img {
@@ -586,13 +662,14 @@
         .gallery-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.62);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 8px;
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 0.25s;
         }
 
         .gallery-item:hover .gallery-overlay {
@@ -601,91 +678,151 @@
 
         .gallery-overlay p {
             color: white;
-            margin: 0 0 10px 0;
-            font-weight: 500;
+            margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            padding: 0 8px;
         }
 
         .btn-delete {
             background: #ef4444;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 7px 14px;
             border-radius: 6px;
             cursor: pointer;
-            transition: background 0.3s;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.2s;
         }
 
         .btn-delete:hover {
             background: #dc2626;
         }
 
-        .form-row {
+        /* ===== GALLERY UPLOAD ===== */
+        .gallery-upload-card {
+            background: white;
+            border-radius: 12px;
+            padding: 22px 28px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+            margin-top: 16px;
+        }
+
+        .gallery-upload-card h3 {
+            margin: 0 0 16px 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-left: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .gallery-upload-row {
             display: flex;
-            gap: 15px;
+            gap: 14px;
             align-items: flex-end;
         }
 
-        .form-row .form-group {
+        .gallery-upload-row .form-group {
             flex: 1;
+            margin-bottom: 0;
         }
 
+        /* ===== FORM ACTIONS (STICKY) ===== */
         .form-actions {
-            margin-top: 30px;
+            position: sticky;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
+            padding: 14px 0;
+            border-top: 1px solid #e2e8f0;
             text-align: right;
+            z-index: 100;
+            margin-top: 8px;
         }
 
-        .btn-primary,
-        .btn-secondary {
-            padding: 14px 32px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
+        /* ===== BUTTONS ===== */
+        .btn-save {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
         }
 
-        .btn-primary:hover {
+        .btn-save:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.45);
         }
 
-        .btn-secondary {
-            background: #64748b;
-            color: white;
-        }
-
-        .btn-secondary:hover {
+        .btn-upload {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
             background: #475569;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
         }
 
-        .btn-primary i,
-        .btn-secondary i {
-            margin-right: 8px;
+        .btn-upload:hover {
+            background: #334155;
         }
 
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            .settings-tabs {
-                flex-wrap: wrap;
+            .form-row-2 {
+                grid-template-columns: 1fr;
             }
 
-            .tab-btn {
-                flex: 1;
-                min-width: 120px;
+            .hours-grid {
+                grid-template-columns: 1fr 1fr;
             }
 
-            .form-row {
+            .gallery-upload-row {
                 flex-direction: column;
                 align-items: stretch;
             }
 
+            .settings-card {
+                padding: 18px;
+            }
+
+            .tab-btn {
+                padding: 10px 14px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hours-grid {
+                grid-template-columns: 1fr;
+            }
+
             .gallery-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .settings-header h1 {
+                font-size: 18px;
             }
         }
     </style>

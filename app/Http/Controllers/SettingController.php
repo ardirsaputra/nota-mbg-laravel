@@ -29,6 +29,7 @@ class SettingController extends Controller
             'phone_1' => 'nullable|string|max:20',
             'phone_2' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'address_2' => 'nullable|string',
             // Nota & direktur
             'director_name' => 'nullable|string|max:255',
             'nota_notes' => 'nullable|array',

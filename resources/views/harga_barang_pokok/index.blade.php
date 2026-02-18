@@ -328,10 +328,11 @@
                         <th>Uraian</th>
                         <th style="width:14%">Kategori</th>
                         <th style="width:12%">Satuan</th>
-                        @if (Auth::check() && Auth::user()->isAdmin())
-                            <th style="width:12%;text-align:right">Keuntungan/Satuan (Rp)</th>
-                        @endif
+
                         <th style="width:14%;text-align:right">Harga Satuan</th>
+                        @if (Auth::check() && Auth::user()->isAdmin())
+                            <th style="width:12%;text-align:right">Keuntungan/Satuan</th>
+                        @endif
                         {{-- <th class="col-harga-baru" style="width:14%;text-align:right">Harga Baru</th> --}}
                         <th style="width:8%;text-align:right">Aksi</th>
                     </tr>
@@ -346,12 +347,13 @@
                             </td>
                             <td>{{ $barang->kategori }}</td>
                             <td>{{ $barang->satuan }}</td>
+
+                            <td style="text-align:right">Rp {{ number_format($barang->harga_satuan, 0, ',', '.') }}</td>
                             @if (Auth::check() && Auth::user()->isAdmin())
                                 <td style="text-align:right">Rp
                                     {{ number_format($barang->profit_per_unit ?? 0, 0, ',', '.') }}
                                 </td>
                             @endif
-                            <td style="text-align:right">Rp {{ number_format($barang->harga_satuan, 0, ',', '.') }}</td>
                             {{-- <td class="col-harga-baru"></td> --}}
                             <td style="text-align:right">
                                 <div class="actions" style="position:relative;justify-content:flex-end;">

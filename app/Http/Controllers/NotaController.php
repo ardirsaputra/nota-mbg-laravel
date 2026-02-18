@@ -83,15 +83,35 @@ class NotaController extends Controller
         $toko_list = Toko::orderBy('nama_toko')->get();
 
         // Calculate profit for each nota using requested tiers
+        // Enhancement: prefer nota item profit_per_unit, then master HargaBarangPokok, otherwise compute by tier.
+        // Build a small lookup map from master price list to avoid N+1 queries.
+        $uraianList = [];
+        foreach ($notas as $nota) {
+            foreach ($nota->items as $item) {
+                if (!empty($item->uraian)) $uraianList[] = $item->uraian;
+            }
+        }
+        $uraianList = array_values(array_unique($uraianList));
+        $masterProfits = [];
+        if (!empty($uraianList)) {
+            $masterProfits = HargaBarangPokok::whereIn('uraian', $uraianList)
+                ->get()
+                ->pluck('profit_per_unit', 'uraian')
+                ->toArray();
+        }
+
         foreach ($notas as $nota) {
             $estimated_profit = 0;
             foreach ($nota->items as $item) {
                 $qty = (float) $item->qty;
                 $harga = (int) $item->harga_satuan;
 
-                // prefer stored profit_per_unit when available; otherwise compute by tier
+                // prefer (1) nota item profit_per_unit, (2) master HargaBarangPokok profit_per_unit, (3) tier percent
                 if (!empty($item->profit_per_unit) && (int)$item->profit_per_unit > 0) {
                     $profitPerUnit = (int) $item->profit_per_unit;
+                    $percent = null;
+                } elseif (!empty($masterProfits[$item->uraian]) && (int)$masterProfits[$item->uraian] > 0) {
+                    $profitPerUnit = (int) $masterProfits[$item->uraian];
                     $percent = null;
                 } else {
                     $percent = $this->profitPercentForPrice($harga);
@@ -114,7 +134,7 @@ class NotaController extends Controller
         $today = date('Y-m-d');
         $count = Nota::whereDate('tanggal', $today)->count() + 1;
         $id = Nota::max('id') + 1;
-        $no = 'MJA-' . $id . '-' . date('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $no =  $id . '-' . date('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
         // provide master lists for client-side UI
         $barang_list = HargaBarangPokok::orderBy('uraian')->get();
@@ -219,6 +239,7 @@ class NotaController extends Controller
         $companyName = "CV. MIA JAYA ABADI";
         $companyLogo = "https://ik.imagekit.io/arsdevahliaja/logo-mja.png";
         $address = "Jalan Raya Metro – Gotong Royong, Dusun III, Pujodadi";
+        $address_2 =  "";
         $phone1 = "0852-1903-4328";
         $phone2 = "0852-8233-3439";
         $companyName = Setting::get('company_name', $companyName);
@@ -238,13 +259,19 @@ class NotaController extends Controller
             $qty = (float) $item->qty;
             $harga = (int) $item->harga_satuan;
 
-            // prefer stored profit_per_unit when present
+            // prefer (1) nota item profit_per_unit, (2) master HargaBarangPokok profit_per_unit, (3) tier percent
             if (!empty($item->profit_per_unit) && (int)$item->profit_per_unit > 0) {
                 $profitPerUnit = (int) $item->profit_per_unit;
                 $percent = null;
             } else {
-                $percent = $this->profitPercentForPrice($harga);
-                $profitPerUnit = (int) ($harga * ($percent / 100));
+                $masterProfit = HargaBarangPokok::where('uraian', $item->uraian)->value('profit_per_unit');
+                if (!empty($masterProfit) && (int)$masterProfit > 0) {
+                    $profitPerUnit = (int) $masterProfit;
+                    $percent = null;
+                } else {
+                    $percent = $this->profitPercentForPrice($harga);
+                    $profitPerUnit = (int) ($harga * ($percent / 100));
+                }
             }
 
             $estimated_profit += ($profitPerUnit * $qty);

@@ -51,6 +51,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            flex-shrink: 0;
         }
 
         .nav-logo img {
@@ -58,38 +59,43 @@
             border-radius: 6px;
             object-fit: contain;
             display: inline-block;
+            flex-shrink: 0;
         }
 
         .brand-text {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #667eea;
             letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .nav-menu {
             display: flex;
             list-style: none;
-            gap: 8px;
+            gap: 4px;
             align-items: center;
+            flex-wrap: nowrap;
         }
 
         .nav-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            padding: 6px 10px;
+            gap: 4px;
+            padding: 5px 7px;
             border-radius: 8px;
         }
 
         .nav-group-items {
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+            gap: 4px;
+            flex-wrap: nowrap;
         }
 
         .nav-group-label {
-            font-size: 11px;
+            font-size: 10px;
             color: #718096;
             text-transform: uppercase;
             letter-spacing: 0.6px;
@@ -99,11 +105,12 @@
         .nav-menu a {
             color: #333;
             text-decoration: none;
-            padding: 6px 10px;
+            padding: 5px 8px;
             border-radius: 6px;
             font-weight: 500;
             transition: all 0.2s;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
         }
 
         .nav-menu a:hover,
@@ -112,10 +119,23 @@
             color: white;
         }
 
-        @media (max-width: 900px) {
-            .nav-group-items {
-                flex-direction: column;
-                gap: 6px
+        /* Skala medium — kurangi padding & font sebelum hamburger muncul */
+        @media (max-width: 1200px) {
+            .nav-menu a {
+                font-size: 0.78rem;
+                padding: 4px 6px;
+            }
+
+            .nav-group {
+                padding: 4px 5px;
+            }
+
+            .nav-group-label {
+                font-size: 9px;
+            }
+
+            .brand-text {
+                font-size: 0.95rem;
             }
         }
 
@@ -242,23 +262,45 @@
             border-color: #17a2b8;
         }
 
-        /* Hamburger menu for mobile */
+        /* Hamburger menu — tablet & mobile */
         .hamburger {
             display: none;
             flex-direction: column;
-            gap: 4px;
+            gap: 5px;
             cursor: pointer;
+            padding: 6px;
+            flex-shrink: 0;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .hamburger:hover {
+            background: #f0f0f0;
         }
 
         .hamburger span {
-            width: 25px;
+            width: 24px;
             height: 3px;
             background: #333;
             border-radius: 2px;
             transition: all 0.3s;
+            display: block;
         }
 
-        @media (max-width: 768px) {
+        /* Hamburger aktif — animasi X */
+        .hamburger.open span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.open span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+
+        @media (max-width: 1024px) {
             .hamburger {
                 display: flex;
             }
@@ -266,26 +308,66 @@
             .nav-menu {
                 position: absolute;
                 top: 70px;
-                left: 50%;
-                transform: translateX(-50%);
-                /* match container width and center */
-                width: calc(100% - 48px);
-                max-width: 1200px;
+                left: 0;
+                right: 0;
+                width: 100%;
                 background: white;
                 flex-direction: column;
-                padding: 20px;
-                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+                padding: 8px 20px 16px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
                 display: none;
-                border-radius: 8px;
+                gap: 0;
+                border-top: 2px solid #667eea;
+                align-items: stretch;
+                max-height: calc(100vh - 70px);
+                overflow-y: auto;
             }
 
             .nav-menu.active {
                 display: flex;
             }
 
+            .nav-group {
+                flex-direction: column;
+                padding: 10px 4px;
+                border-bottom: 1px solid #f0f0f0;
+                gap: 6px;
+            }
+
+            .nav-group:last-of-type {
+                border-bottom: none;
+            }
+
+            .nav-group-items {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .nav-group-label {
+                font-size: 10px;
+            }
+
             .nav-menu a {
+                font-size: 0.9rem;
+                padding: 8px 12px;
+                white-space: normal;
+            }
+
+            .nav-menu>li:last-child {
+                padding-top: 10px;
+            }
+
+            .logout-btn {
                 width: 100%;
                 text-align: center;
+                justify-content: center;
+            }
+        }
+
+        /* Layar sangat kecil — sembunyikan teks brand */
+        @media (max-width: 360px) {
+            .brand-text {
+                display: none;
             }
         }
     </style>
@@ -465,7 +547,10 @@
 
     <script>
         function toggleMenu() {
-            document.getElementById('navMenu').classList.toggle('active');
+            const nav = document.getElementById('navMenu');
+            const hamburger = document.querySelector('.hamburger');
+            nav.classList.toggle('active');
+            hamburger.classList.toggle('open');
         }
 
         // Close menu when clicking outside
@@ -475,6 +560,15 @@
 
             if (!nav.contains(event.target) && !hamburger.contains(event.target)) {
                 nav.classList.remove('active');
+                hamburger.classList.remove('open');
+            }
+        });
+
+        // Close menu on resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 1024) {
+                document.getElementById('navMenu').classList.remove('active');
+                document.querySelector('.hamburger').classList.remove('open');
             }
         });
     </script>
