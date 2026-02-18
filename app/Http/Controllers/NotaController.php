@@ -67,8 +67,8 @@ class NotaController extends Controller
             $query->where('profit_insight', false);
         }
 
-        // Filter by toko
-        if ($toko_filter !== 'all') {
+        // Filter by toko — only apply if the nota table contains toko fields
+        if (\Illuminate\Support\Facades\Schema::hasColumn('nota', 'toko_id') && $toko_filter !== 'all') {
             if ($toko_filter === 'manual') {
                 $query->whereNull('toko_id')->whereNotNull('nama_toko_manual');
             } elseif ($toko_filter === 'none') {
@@ -302,18 +302,27 @@ class NotaController extends Controller
             $updateHarga = false;
         }
 
-        $nota = Nota::create([
+        $createData = [
             'no' => $validated['no'],
             'tanggal' => $validated['tanggal'],
-            'toko_id' => $validated['toko_id'] ?? null,
-            'nama_toko_manual' => $validated['nama_toko_manual'] ?? null,
-            'alamat_toko_manual' => $validated['alamat_toko_manual'] ?? null,
             'nama_toko' => $validated['nama_toko'],
             'alamat' => $validated['alamat'],
             'total' => 0,
             'user_id' => Auth::id(),
             'is_admin_nota' => ($authUser && $authUser->isAdmin()),
-        ]);
+        ];
+
+        if (Schema::hasColumn('nota', 'toko_id')) {
+            $createData['toko_id'] = $validated['toko_id'] ?? null;
+        }
+        if (Schema::hasColumn('nota', 'nama_toko_manual')) {
+            $createData['nama_toko_manual'] = $validated['nama_toko_manual'] ?? null;
+        }
+        if (Schema::hasColumn('nota', 'alamat_toko_manual')) {
+            $createData['alamat_toko_manual'] = $validated['alamat_toko_manual'] ?? null;
+        }
+
+        $nota = Nota::create($createData);
 
         // Save items if provided
         $this->saveNotaItems($nota, array_merge($validated, ['update_harga' => $updateHarga]));
@@ -428,15 +437,24 @@ class NotaController extends Controller
             'update_harga' => 'nullable|boolean',
         ]);
 
-        $nota->update([
+        $updateData = [
             'no' => $validated['no'],
             'tanggal' => $validated['tanggal'],
-            'toko_id' => $validated['toko_id'] ?? null,
-            'nama_toko_manual' => $validated['nama_toko_manual'] ?? null,
-            'alamat_toko_manual' => $validated['alamat_toko_manual'] ?? null,
             'nama_toko' => $validated['nama_toko'],
             'alamat' => $validated['alamat'],
-        ]);
+        ];
+
+        if (Schema::hasColumn('nota', 'toko_id')) {
+            $updateData['toko_id'] = $validated['toko_id'] ?? null;
+        }
+        if (Schema::hasColumn('nota', 'nama_toko_manual')) {
+            $updateData['nama_toko_manual'] = $validated['nama_toko_manual'] ?? null;
+        }
+        if (Schema::hasColumn('nota', 'alamat_toko_manual')) {
+            $updateData['alamat_toko_manual'] = $validated['alamat_toko_manual'] ?? null;
+        }
+
+        $nota->update($updateData);
 
         // Save items if provided
         $this->saveNotaItems($nota, $validated);
@@ -711,12 +729,9 @@ class NotaController extends Controller
         $no = 'MJA-' . $newId . '-' . date('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
         // Create cloned nota as admin nota
-        $clonedNota = Nota::create([
+        $cloneData = [
             'no' => $no,
             'tanggal' => now(),
-            'toko_id' => $originalNota->toko_id,
-            'nama_toko_manual' => $originalNota->nama_toko_manual,
-            'alamat_toko_manual' => $originalNota->alamat_toko_manual,
             'nama_toko' => $originalNota->nama_toko,
             'alamat' => $originalNota->alamat,
             'total' => 0,
@@ -724,7 +739,19 @@ class NotaController extends Controller
             'is_admin_nota' => true,
             'cloned_from_id' => $originalNota->id,
             'profit_insight' => $originalNota->profit_insight,
-        ]);
+        ];
+
+        if (Schema::hasColumn('nota', 'toko_id')) {
+            $cloneData['toko_id'] = $originalNota->toko_id;
+        }
+        if (Schema::hasColumn('nota', 'nama_toko_manual')) {
+            $cloneData['nama_toko_manual'] = $originalNota->nama_toko_manual;
+        }
+        if (Schema::hasColumn('nota', 'alamat_toko_manual')) {
+            $cloneData['alamat_toko_manual'] = $originalNota->alamat_toko_manual;
+        }
+
+        $clonedNota = Nota::create($cloneData);
 
         // Clone all items
         foreach ($originalNota->items as $item) {
