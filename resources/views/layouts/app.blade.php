@@ -10,7 +10,18 @@
         $companyName = Setting::get('company_name', 'CV Mia Jaya Abadi');
         $companyLogo = Setting::get('company_logo');
     @endphp
-    <title>@yield('title', $companyName ?? 'CV Mia Jaya Abadi')</title>
+    <title>
+        @hasSection('title')
+            @yield('title') - {{ $companyName }}
+        @else
+            {{ $companyName }}
+        @endif
+    </title>
+
+    {{-- favicon — use company logo if set, otherwise fallback to public/favicon.ico --}}
+    <link rel="icon" href="{{ $companyLogo ? asset('storage/' . $companyLogo) : asset('favicon.ico') }}" />
+
+    <meta name="application-name" content="{{ $companyName }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @stack('styles')
     <style>
