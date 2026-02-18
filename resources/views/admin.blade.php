@@ -284,22 +284,28 @@
                         ` &nbsp; <small>(writable: ${data.public_storage_writable ? 'Yes' : 'No'})</small></div>`);
                     lines.push(
                         `<div style="margin-top:6px"><strong>company_logo (model):</strong> ${data.company_logo ?? '—'}</div>`
-                        );
+                    );
                     lines.push(
                         `<div><strong>company_logo public exists:</strong> ${data.company_logo_public_exists ? 'Yes' : 'No'}</div>`
-                        );
+                    );
+                    lines.push(
+                        `<div><strong>company_logo public/public exists:</strong> ${data.company_logo_public_public_exists ? 'Yes' : 'No'}</div>`
+                    );
+                    lines.push(
+                        `<div><strong>company_logo public/app/public exists:</strong> ${data.company_logo_public_app_public_exists ? 'Yes' : 'No'}</div>`
+                    );
                     lines.push(
                         `<div><strong>company_logo disk exists:</strong> ${data.company_logo_disk_exists ? 'Yes' : 'No'}</div>`
-                        );
+                    );
                     if (data.settings_files && data.settings_files.length) {
                         lines.push(
-                            '<div style="margin-top:8px"><strong>Files in public/storage/settings</strong><ul style="margin:6px 0 0 18px;padding:0">'
-                            );
+                            '<div style="margin-top:8px"><strong>Files in public/storage (detected)</strong><ul style="margin:6px 0 0 18px;padding:0">'
+                        );
                         data.settings_files.forEach(function(f) {
-                            const url = '/storage/settings/' + encodeURIComponent(f.name);
+                            const url = f.public_url || ('/storage/settings/' + encodeURIComponent(f.name));
                             lines.push(
-                                `<li style="margin-bottom:6px"><a href="${url}" target="_blank">${f.name}</a> — ${(f.size/1024).toFixed(1)} KB — perms:${f.perms} — r:${f.readable ? 'Y' : 'N'} w:${f.writable ? 'Y' : 'N'}</li>`
-                                );
+                                `<li style="margin-bottom:6px"><a href="${url}" target="_blank">${f.name}</a> — ${(f.size/1024).toFixed(1)} KB — perms:${f.perms} — r:${f.readable ? 'Y' : 'N'} w:${f.writable ? 'Y' : 'N'} <br><small style="color:#666">${f.location || ''}</small></li>`
+                            );
                         });
                         lines.push('</ul></div>');
                     } else {

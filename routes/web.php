@@ -192,25 +192,46 @@ Route::middleware(['auth'])->group(function () {
             $publicStorage = public_path('storage');
             $isSymlink = is_link($publicStorage) && @realpath($publicStorage) === @realpath(storage_path('app/public'));
             $settingsDir = $publicStorage . DIRECTORY_SEPARATOR . 'settings';
+            $settingsDir2 = $publicStorage . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'settings';
+            $settingsDir3 = $publicStorage . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'settings';
 
             $files = [];
-            if (is_dir($settingsDir)) {
-                foreach (new \DirectoryIterator($settingsDir) as $f) {
-                    if ($f->isFile()) {
-                        $files[] = [
-                            'name' => $f->getFilename(),
-                            'size' => $f->getSize(),
-                            'mtime' => date('c', $f->getMTime()),
-                            'perms' => substr(sprintf('%o', $f->getPerms()), -4),
-                            'readable' => is_readable($f->getPathname()),
-                            'writable' => is_writable($f->getPathname()),
-                        ];
+            $seen = [];
+            foreach ([$settingsDir, $settingsDir2, $settingsDir3] as $dirIndex => $dir) {
+                if (!is_dir($dir)) continue;
+                foreach (new \DirectoryIterator($dir) as $f) {
+                    if (!$f->isFile()) continue;
+                    $name = $f->getFilename();
+                    if (in_array($name, $seen)) continue; // avoid duplicates across dirs
+                    $seen[] = $name;
+
+                    // determine public URL depending on which dir the file was found in
+                    $publicUrl = null;
+                    if ($dirIndex === 0) {
+                        $publicUrl = asset('storage/settings/' . rawurlencode($name));
+                    } elseif ($dirIndex === 1) {
+                        $publicUrl = asset('storage/public/settings/' . rawurlencode($name));
+                    } else {
+                        $publicUrl = asset('storage/app/public/settings/' . rawurlencode($name));
                     }
+
+                    $files[] = [
+                        'name' => $name,
+                        'size' => $f->getSize(),
+                        'mtime' => date('c', $f->getMTime()),
+                        'perms' => substr(sprintf('%o', $f->getPerms()), -4),
+                        'readable' => is_readable($f->getPathname()),
+                        'writable' => is_writable($f->getPathname()),
+                        'public_url' => $publicUrl,
+                        'location' => $dir,
+                    ];
                 }
             }
 
             $companyLogo = \App\Models\Setting::get('company_logo');
             $logoPublic = $companyLogo ? file_exists($publicStorage . '/' . $companyLogo) : false;
+            $logoPublic2 = $companyLogo ? file_exists($publicStorage . '/public/' . $companyLogo) : false;
+            $logoPublic3 = $companyLogo ? file_exists($publicStorage . '/app/public/' . $companyLogo) : false;
             $logoDisk = $companyLogo ? \Illuminate\Support\Facades\Storage::disk('public')->exists($companyLogo) : false;
 
             return response()->json([
@@ -220,6 +241,8 @@ Route::middleware(['auth'])->group(function () {
                 'settings_files' => $files,
                 'company_logo' => $companyLogo,
                 'company_logo_public_exists' => $logoPublic,
+                'company_logo_public_public_exists' => $logoPublic2,
+                'company_logo_public_app_public_exists' => $logoPublic3,
                 'company_logo_disk_exists' => $logoDisk,
             ]);
         })->name('admin.storage-audit');

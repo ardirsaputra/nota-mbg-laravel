@@ -86,6 +86,12 @@ class Setting extends Model
             return asset('storage/public/' . $relativePath);
         }
 
+        // fallback: public/storage/app/public/<path> (some hosts expose this path)
+        $publicPath3 = public_path('storage/app/public/' . $relativePath);
+        if (file_exists($publicPath3)) {
+            return asset('storage/app/public/' . $relativePath);
+        }
+
         // fallback: check storage disk (symlink scenario)
         try {
             if (\Illuminate\Support\Facades\Storage::disk('public')->exists($relativePath)) {
