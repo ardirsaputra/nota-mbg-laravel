@@ -267,4 +267,97 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const auditBtn = document.getElementById('btn-audit-storage');
+                const syncBtn = document.getElementById('btn-sync-storage');
+                const resultEl = document.getElementById('storage-audit-result');
+
+                function renderAudit(data) {
+                    const lines = [];
+                    lines.push(`<div><strong>Symlink:</strong> ${data.is_symlink ? 'Yes' : 'No'}</div>`);
+                    lines.push(
+                        `<div><strong>public/storage exists:</strong> ${data.public_storage_exists ? 'Yes' : 'No'}`);
+                    if (data.public_storage_exists) lines.push(
+                        ` &nbsp; <small>(writable: ${data.public_storage_writable ? 'Yes' : 'No'})</small></div>`);
+                    lines.push(
+                        `<div style="margin-top:6px"><strong>company_logo (model):</strong> ${data.company_logo ?? '—'}</div>`
+                        );
+                    lines.push(
+                        `<div><strong>company_logo public exists:</strong> ${data.company_logo_public_exists ? 'Yes' : 'No'}</div>`
+                        );
+                    lines.push(
+                        `<div><strong>company_logo disk exists:</strong> ${data.company_logo_disk_exists ? 'Yes' : 'No'}</div>`
+                        );
+                    if (data.settings_files && data.settings_files.length) {
+                        lines.push(
+                            '<div style="margin-top:8px"><strong>Files in public/storage/settings</strong><ul style="margin:6px 0 0 18px;padding:0">'
+                            );
+                        data.settings_files.forEach(function(f) {
+                            const url = '/storage/settings/' + encodeURIComponent(f.name);
+                            lines.push(
+                                `<li style="margin-bottom:6px"><a href="${url}" target="_blank">${f.name}</a> — ${(f.size/1024).toFixed(1)} KB — perms:${f.perms} — r:${f.readable ? 'Y' : 'N'} w:${f.writable ? 'Y' : 'N'}</li>`
+                                );
+                        });
+                        lines.push('</ul></div>');
+                    } else {
+                        lines.push(
+                            '<div style="margin-top:8px"><em>Tidak ada file di public/storage/settings</em></div>');
+                    }
+                    resultEl.innerHTML = lines.join('');
+                }
+
+                auditBtn.addEventListener('click', function() {
+                    auditBtn.disabled = true;
+                    auditBtn.innerText = 'Checking...';
+                    fetch('{{ route('admin.storage-audit') }}', {
+                            credentials: 'same-origin',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(function(r) {
+                            return r.json();
+                        })
+                        .then(function(data) {
+                            renderAudit(data);
+                        })
+                        .catch(function(e) {
+                            resultEl.innerText = 'Audit failed: ' + e.message;
+                        })
+                        .finally(function() {
+                            auditBtn.disabled = false;
+                            auditBtn.innerHTML = '<i class="fas fa-search"></i> Audit';
+                        });
+                });
+
+                syncBtn.addEventListener('click', function() {
+                    if (!confirm('Sinkronkan file dari storage/app/public ke public/storage?')) return;
+                    syncBtn.disabled = true;
+                    syncBtn.innerText = 'Syncing...';
+                    fetch('{{ route('admin.storage-sync') }}', {
+                            credentials: 'same-origin'
+                        })
+                        .then(function(r) {
+                            return r.text();
+                        })
+                        .then(function(text) {
+                            resultEl.innerHTML =
+                                '<div style="color:green">Sinkronisasi selesai — jalankan Audit untuk memverifikasi.</div>';
+                            document.getElementById('btn-audit-storage').click();
+                        })
+                        .catch(function(e) {
+                            resultEl.innerText = 'Sync failed: ' + e.message;
+                        })
+                        .finally(function() {
+                            syncBtn.disabled = false;
+                            syncBtn.innerHTML = '<i class="fas fa-sync"></i> Sync';
+                        });
+                });
+            });
+        </script>
+    @endpush
+
 @endsection
