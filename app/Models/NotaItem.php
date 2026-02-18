@@ -17,8 +17,10 @@ class NotaItem extends Model
     {
         parent::__construct($attributes);
         try {
-            if (!\Illuminate\Support\Facades\Schema::hasColumn($this->getTable(), 'created_at') ||
-                !\Illuminate\Support\Facades\Schema::hasColumn($this->getTable(), 'updated_at')) {
+            if (
+                !\Illuminate\Support\Facades\Schema::hasColumn($this->getTable(), 'created_at') ||
+                !\Illuminate\Support\Facades\Schema::hasColumn($this->getTable(), 'updated_at')
+            ) {
                 $this->timestamps = false;
             }
         } catch (\Throwable $e) {
