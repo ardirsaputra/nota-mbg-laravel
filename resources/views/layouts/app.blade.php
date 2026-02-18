@@ -6,9 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php
-        use App\Models\Setting;
-        $companyName = Setting::get('company_name', 'CV Mia Jaya Abadi');
-        $companyLogo = Setting::get('company_logo');
+        // Defensive: Setting model may be missing on partially-deployed hosts — fall back to defaults
+        $companyName = class_exists(\App\Models\Setting::class)
+            ? \App\Models\Setting::get('company_name', 'CV Mia Jaya Abadi')
+            : 'CV Mia Jaya Abadi';
+        $companyLogo = class_exists(\App\Models\Setting::class) ? \App\Models\Setting::get('company_logo') : null;
     @endphp
     <title>
         @hasSection('title')

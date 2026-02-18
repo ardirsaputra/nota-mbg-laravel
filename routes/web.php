@@ -27,7 +27,71 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Admin helper: create public/storage symlink (admin-only)
+// Tries symlink first and falls back to copying storage/app/public -> public/storage when symlinks are not allowed
+Route::get('/storage-link', function () {
+    $src = storage_path('app/public');
+    $dst = public_path('storage');
 
+    // Try the normal artisan command first
+    try {
+        // Guard against open_basedir restrictions which make storage_path() inaccessible on some hosts
+        $openBasedir = ini_get('open_basedir');
+        $srcAccessible = true;
+        if ($openBasedir) {
+            // sanitize open_basedir entries and skip any containing null bytes
+            $allowed = array_filter(array_map('trim', explode(PATH_SEPARATOR, $openBasedir)), fn($s) => $s !== '' && strpos($s, "\0") === false);
+            $realSrc = @realpath($src);
+            $srcAccessible = false;
+            if ($realSrc) {
+                foreach ($allowed as $a) {
+                    if ($a === '' || strpos($a, "\0") !== false) {
+                        continue;
+                    }
+                    $realA = @realpath($a);
+                    if ($realA && strpos($realSrc, $realA) === 0) {
+                        $srcAccessible = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!$srcAccessible) {
+            // Host prevents access to storage_path — create public/storage directory as best-effort fallback
+            @mkdir($dst, 0755, true);
+            return redirect()->back()->with('status', 'Host prevents accessing storage_path — created public/storage fallback directory');
+        }
+
+        \Artisan::call('storage:link');
+        return redirect()->back()->with('status', 'storage:link executed successfully');
+    } catch (\Throwable $e) {
+        // Fallback: recursively copy files into public/storage (only if source is accessible)
+        try {
+            if (!is_dir($src)) {
+                return redirect()->back()->with('error', "storage:link failed and source '$src' not found: " . $e->getMessage());
+            }
+
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($src, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::SELF_FIRST
+            );
+
+            foreach ($iterator as $item) {
+                $target = $dst . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+                if ($item->isDir()) {
+                    @mkdir($target, 0755, true);
+                } else {
+                    copy($item->getPathname(), $target);
+                }
+            }
+
+            return redirect()->back()->with('status', 'storage:link not allowed on host — performed fallback copy to public/storage');
+        } catch (\Throwable $ex) {
+            return redirect()->back()->with('error', 'storage:link failed and fallback copy failed: ' . $e->getMessage() . ' / ' . $ex->getMessage());
+        }
+    }
+})->name('storage-link');
 // Protected routes (require authentication)
 Route::middleware(['auth'])->group(function () {
     // Dashboard route
@@ -95,6 +159,119 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/settings/gallery/upload', [SettingController::class, 'uploadGallery'])->name('settings.gallery.upload');
         Route::delete('/settings/gallery/{gallery}', [SettingController::class, 'deleteGallery'])->name('settings.gallery.delete');
         Route::post('/settings/service/upload', [SettingController::class, 'uploadServiceImage'])->name('settings.service.upload');
+
+        // Admin helper: run migrations + seed (admin-only)
+        Route::get('/admin/run-migrations', function () {
+            try {
+                // Ensure DB cache table exists when CACHE_STORE=database to avoid cache:clear failures
+                if (config('cache.default') === 'database') {
+                    $cacheTable = config('cache.stores.database.table', 'cache');
+                    if (!\Illuminate\Support\Facades\Schema::hasTable($cacheTable)) {
+                        \Artisan::call('cache:table');
+                    }
+                }
+
+                \Artisan::call('migrate', ['--force' => true]);
+
+                // Only run seed if the settings table exists (prevents seeder errors on partial migrations)
+                if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
+                    \Artisan::call('db:seed', ['--force' => true]);
+                }
+
+                return redirect()->back()->with('status', 'Migrations and seed executed successfully');
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Migrate/Seed failed: ' . $e->getMessage());
+            }
+        })->name('admin.run-migrations');
+
+        // Admin helper: storage audit (admin-only)
+        Route::get('/admin/storage-audit', function () {
+            if (!Auth::check() || !Auth::user()->isAdmin())
+                abort(403);
+
+            $publicStorage = public_path('storage');
+            $isSymlink = is_link($publicStorage) && @realpath($publicStorage) === @realpath(storage_path('app/public'));
+            $settingsDir = $publicStorage . DIRECTORY_SEPARATOR . 'settings';
+
+            $files = [];
+            if (is_dir($settingsDir)) {
+                foreach (new \DirectoryIterator($settingsDir) as $f) {
+                    if ($f->isFile()) {
+                        $files[] = [
+                            'name' => $f->getFilename(),
+                            'size' => $f->getSize(),
+                            'mtime' => date('c', $f->getMTime()),
+                            'perms' => substr(sprintf('%o', $f->getPerms()), -4),
+                            'readable' => is_readable($f->getPathname()),
+                            'writable' => is_writable($f->getPathname()),
+                        ];
+                    }
+                }
+            }
+
+            $companyLogo = \App\Models\Setting::get('company_logo');
+            $logoPublic = $companyLogo ? file_exists($publicStorage . '/' . $companyLogo) : false;
+            $logoDisk = $companyLogo ? \Illuminate\Support\Facades\Storage::disk('public')->exists($companyLogo) : false;
+
+            return response()->json([
+                'is_symlink' => $isSymlink,
+                'public_storage_exists' => file_exists($publicStorage),
+                'public_storage_writable' => is_writable($publicStorage),
+                'settings_files' => $files,
+                'company_logo' => $companyLogo,
+                'company_logo_public_exists' => $logoPublic,
+                'company_logo_disk_exists' => $logoDisk,
+            ]);
+        })->name('admin.storage-audit');
+
+        // Admin helper: copy storage/app/public -> public/storage (admin-only)
+        Route::get('/admin/storage-sync', function () {
+            if (!Auth::check() || !Auth::user()->isAdmin())
+                abort(403);
+
+            $src = storage_path('app/public');
+            $dst = public_path('storage');
+
+            if (!is_dir($src)) {
+                return redirect()->back()->with('error', 'Source storage path not accessible on this host.');
+            }
+
+            try {
+                $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($src, \RecursiveDirectoryIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::SELF_FIRST
+                );
+
+                foreach ($iterator as $item) {
+                    $target = $dst . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+                    if ($item->isDir()) {
+                        @mkdir($target, 0755, true);
+                    } else {
+                        @copy($item->getPathname(), $target);
+                    }
+                }
+
+                return redirect()->back()->with('status', 'Synced storage/app/public -> public/storage');
+            } catch (\Throwable $e) {
+                return redirect()->back()->with('error', 'Sync failed: ' . $e->getMessage());
+            }
+        })->name('admin.storage-sync');
+
+        // Admin helper: inspect important env/config values (admin-only)
+        Route::get('/admin/debug-config', function () {
+            if (!Auth::check() || !Auth::user()->isAdmin())
+                abort(403);
+            return response()->json([
+                'APP_ENV' => env('APP_ENV'),
+                'APP_DEBUG' => env('APP_DEBUG'),
+                'DB_HOST (env)' => env('DB_HOST'),
+                'DB_HOST (config)' => config('database.connections.mysql.host'),
+                'config_cached' => file_exists(base_path('bootstrap/cache/config.php')),
+                'dotenv_exists' => file_exists(base_path('.env')),
+                'base_path' => base_path(),
+            ]);
+        })->name('admin.debug-config');
+
     });
 
     // Nota routes (accessible by both admin and user)

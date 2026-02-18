@@ -44,7 +44,17 @@
         'Sabtu' => '08:00 - 14:00',
         'Minggu' => 'Tutup',
     ]);
-    $galleries = Gallery::ordered()->get();
+
+    // Defensive: return empty collection when galleries table is missing on the host
+    try {
+        if (\Illuminate\Support\Facades\Schema::hasTable('galleries')) {
+            $galleries = Gallery::ordered()->get();
+        } else {
+            $galleries = collect();
+        }
+    } catch (Throwable $e) {
+        $galleries = collect();
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">

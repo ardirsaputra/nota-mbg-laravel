@@ -14,16 +14,25 @@ class TokoController extends Controller
     {
         $search = $request->get('search', '');
 
-        $query = Toko::query();
+        // Defensive: if the `toko` table is missing on the server, return an empty collection
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('toko')) {
+                $query = Toko::query();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('nama_toko', 'like', "%{$search}%")
-                    ->orWhere('alamat', 'like', "%{$search}%");
-            });
+                if ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('nama_toko', 'like', "%{$search}%")
+                            ->orWhere('alamat', 'like', "%{$search}%");
+                    });
+                }
+
+                $toko_list = $query->orderBy('nama_toko')->get();
+            } else {
+                $toko_list = collect();
+            }
+        } catch (\Throwable $e) {
+            $toko_list = collect();
         }
-
-        $toko_list = $query->orderBy('nama_toko')->get();
 
         return view('toko.index', compact('toko_list', 'search'));
     }

@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\Toko;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Ramsey\Collection\Set;
 
 class NotaController extends Controller
@@ -84,7 +85,15 @@ class NotaController extends Controller
         $notas = $query->paginate(50)->withQueryString();
 
         // Get all toko for filter dropdown
-        $toko_list = Toko::orderBy('nama_toko')->get();
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('toko')) {
+                $toko_list = Toko::orderBy('nama_toko')->get();
+            } else {
+                $toko_list = collect();
+            }
+        } catch (\Throwable $e) {
+            $toko_list = collect();
+        }
 
         // Calculate profit for each nota using requested tiers
         // Enhancement: prefer nota item profit_per_unit, then master HargaBarangPokok, otherwise compute by tier.
@@ -92,16 +101,22 @@ class NotaController extends Controller
         $uraianList = [];
         foreach ($notas as $nota) {
             foreach ($nota->items as $item) {
-                if (!empty($item->uraian)) $uraianList[] = $item->uraian;
+                if (!empty($item->uraian))
+                    $uraianList[] = $item->uraian;
             }
         }
         $uraianList = array_values(array_unique($uraianList));
         $masterProfits = [];
         if (!empty($uraianList)) {
-            $masterProfits = HargaBarangPokok::whereIn('uraian', $uraianList)
-                ->get()
-                ->pluck('profit_per_unit', 'uraian')
-                ->toArray();
+            if (Schema::hasColumn('harga_barang_pokok', 'profit_per_unit')) {
+                $masterProfits = HargaBarangPokok::whereIn('uraian', $uraianList)
+                    ->get()
+                    ->pluck('profit_per_unit', 'uraian')
+                    ->toArray();
+            } else {
+                // migration not applied — fallback to tier-based profit calculation
+                $masterProfits = [];
+            }
         }
 
         foreach ($notas as $nota) {
@@ -111,10 +126,10 @@ class NotaController extends Controller
                 $harga = (int) $item->harga_satuan;
 
                 // prefer (1) nota item profit_per_unit, (2) master HargaBarangPokok profit_per_unit, (3) tier percent
-                if (!empty($item->profit_per_unit) && (int)$item->profit_per_unit > 0) {
+                if (!empty($item->profit_per_unit) && (int) $item->profit_per_unit > 0) {
                     $profitPerUnit = (int) $item->profit_per_unit;
                     $percent = null;
-                } elseif (!empty($masterProfits[$item->uraian]) && (int)$masterProfits[$item->uraian] > 0) {
+                } elseif (!empty($masterProfits[$item->uraian]) && (int) $masterProfits[$item->uraian] > 0) {
                     $profitPerUnit = (int) $masterProfits[$item->uraian];
                     $percent = null;
                 } else {
@@ -138,16 +153,22 @@ class NotaController extends Controller
             $uraianIncluded = [];
             foreach ($includedNotas as $n) {
                 foreach ($n->items as $it) {
-                    if (!empty($it->uraian)) $uraianIncluded[] = $it->uraian;
+                    if (!empty($it->uraian))
+                        $uraianIncluded[] = $it->uraian;
                 }
             }
             $uraianIncluded = array_values(array_unique($uraianIncluded));
             $masterProfitsIncluded = [];
             if (!empty($uraianIncluded)) {
-                $masterProfitsIncluded = HargaBarangPokok::whereIn('uraian', $uraianIncluded)
-                    ->get()
-                    ->pluck('profit_per_unit', 'uraian')
-                    ->toArray();
+                if (Schema::hasColumn('harga_barang_pokok', 'profit_per_unit')) {
+                    $masterProfitsIncluded = HargaBarangPokok::whereIn('uraian', $uraianIncluded)
+                        ->get()
+                        ->pluck('profit_per_unit', 'uraian')
+                        ->toArray();
+                } else {
+                    // migration not applied — fallback to tier-based profit calculation
+                    $masterProfitsIncluded = [];
+                }
             }
 
             foreach ($includedNotas as $n) {
@@ -156,9 +177,9 @@ class NotaController extends Controller
                     $qty = (float) $it->qty;
                     $harga = (int) $it->harga_satuan;
 
-                    if (!empty($it->profit_per_unit) && (int)$it->profit_per_unit > 0) {
+                    if (!empty($it->profit_per_unit) && (int) $it->profit_per_unit > 0) {
                         $ppu = (int) $it->profit_per_unit;
-                    } elseif (!empty($masterProfitsIncluded[$it->uraian]) && (int)$masterProfitsIncluded[$it->uraian] > 0) {
+                    } elseif (!empty($masterProfitsIncluded[$it->uraian]) && (int) $masterProfitsIncluded[$it->uraian] > 0) {
                         $ppu = (int) $masterProfitsIncluded[$it->uraian];
                     } else {
                         $percent = $this->profitPercentForPrice($harga);
@@ -181,7 +202,7 @@ class NotaController extends Controller
         $today = date('Y-m-d');
         $count = Nota::whereDate('tanggal', $today)->count() + 1;
         $id = Nota::max('id') + 1;
-        $no =  $id . '-' . date('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $no = $id . '-' . date('Ymd') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
 
         // provide master lists for client-side UI
         /** @var \App\Models\User|null $authUser */
@@ -200,11 +221,19 @@ class NotaController extends Controller
         $kategori_list = $this->loadKategoriList();
 
         // Toko only for admin
-        if ($authUser && $authUser->isAdmin()) {
-            $toko_list = Toko::orderBy('nama_toko')->get();
-        } else {
-            // regular users only get their own toko(s)
-            $toko_list = Toko::where('user_id', Auth::id())->orderBy('nama_toko')->get();
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('toko')) {
+                if ($authUser && $authUser->isAdmin()) {
+                    $toko_list = Toko::orderBy('nama_toko')->get();
+                } else {
+                    // regular users only get their own toko(s)
+                    $toko_list = Toko::where('user_id', Auth::id())->orderBy('nama_toko')->get();
+                }
+            } else {
+                $toko_list = collect();
+            }
+        } catch (\Throwable $e) {
+            $toko_list = collect();
         }
 
         return view('nota.create', compact('no', 'barang_list', 'satuan_list', 'toko_list', 'kategori_list'));
@@ -220,10 +249,14 @@ class NotaController extends Controller
      */
     protected function profitPercentForPrice(int $harga): float
     {
-        if ($harga < 1000) return 20.0;
-        if ($harga <= 10000) return 20.0; // "dibawah 10 atau sama" interpreted as 10.000
-        if ($harga > 150000) return 5.0;
-        if ($harga > 50000) return 10.0;
+        if ($harga < 1000)
+            return 20.0;
+        if ($harga <= 10000)
+            return 20.0; // "dibawah 10 atau sama" interpreted as 10.000
+        if ($harga > 150000)
+            return 5.0;
+        if ($harga > 50000)
+            return 10.0;
         return 20.0;
     }
 
@@ -295,7 +328,7 @@ class NotaController extends Controller
         $companyName = "CV. MIA JAYA ABADI";
         $companyLogo = "https://ik.imagekit.io/arsdevahliaja/logo-mja.png";
         $address = "Jalan Raya Metro – Gotong Royong, Dusun III, Pujodadi";
-        $address_2 =  "";
+        $address_2 = "";
         $phone1 = "0852-1903-4328";
         $phone2 = "0852-8233-3439";
         $companyName = Setting::get('company_name', $companyName);
@@ -316,12 +349,15 @@ class NotaController extends Controller
             $harga = (int) $item->harga_satuan;
 
             // prefer (1) nota item profit_per_unit, (2) master HargaBarangPokok profit_per_unit, (3) tier percent
-            if (!empty($item->profit_per_unit) && (int)$item->profit_per_unit > 0) {
+            if (!empty($item->profit_per_unit) && (int) $item->profit_per_unit > 0) {
                 $profitPerUnit = (int) $item->profit_per_unit;
                 $percent = null;
             } else {
-                $masterProfit = HargaBarangPokok::where('uraian', $item->uraian)->value('profit_per_unit');
-                if (!empty($masterProfit) && (int)$masterProfit > 0) {
+                $masterProfit = null;
+                if (Schema::hasColumn('harga_barang_pokok', 'profit_per_unit')) {
+                    $masterProfit = HargaBarangPokok::where('uraian', $item->uraian)->value('profit_per_unit');
+                }
+                if (!empty($masterProfit) && (int) $masterProfit > 0) {
                     $profitPerUnit = (int) $masterProfit;
                     $percent = null;
                 } else {
@@ -356,7 +392,15 @@ class NotaController extends Controller
         }
 
         $satuan_list = \App\Models\Satuan::orderBy('nama_satuan')->get();
-        $toko_list = Toko::orderBy('nama_toko')->get();
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('toko')) {
+                $toko_list = Toko::orderBy('nama_toko')->get();
+            } else {
+                $toko_list = collect();
+            }
+        } catch (\Throwable $e) {
+            $toko_list = collect();
+        }
         $kategori_list = $this->loadKategoriList();
 
         return view('nota.edit', compact('nota', 'barang_list', 'satuan_list', 'toko_list', 'kategori_list'));
@@ -512,7 +556,7 @@ class NotaController extends Controller
 
                 $updateData = [
                     'harga_satuan' => $harga,
-                    'satuan'       => $satuan,
+                    'satuan' => $satuan,
                 ];
                 if ($profitPerUnitForRow > 0) {
                     $updateData['profit_per_unit'] = $profitPerUnitForRow;
@@ -523,10 +567,10 @@ class NotaController extends Controller
                 } else {
                     // Create new entry scoped to this user
                     HargaBarangPokok::create(array_merge($updateData, [
-                        'uraian'      => $uraian,
-                        'kategori'    => 'Umum',
+                        'uraian' => $uraian,
+                        'kategori' => 'Umum',
                         'nilai_satuan' => 1,
-                        'user_id'     => $isAdmin ? null : Auth::id(),
+                        'user_id' => $isAdmin ? null : Auth::id(),
                     ]));
                 }
             }
@@ -543,10 +587,10 @@ class NotaController extends Controller
     public function storeBarang(Request $request)
     {
         $validated = $request->validate([
-            'uraian'         => 'required|string|max:255',
-            'kategori'       => 'required|string|max:100',
-            'satuan'         => 'required|string|max:50',
-            'harga_satuan'   => 'required|integer|min:1',
+            'uraian' => 'required|string|max:255',
+            'kategori' => 'required|string|max:100',
+            'satuan' => 'required|string|max:50',
+            'harga_satuan' => 'required|integer|min:1',
             'profit_per_unit' => 'nullable|integer|min:0',
         ]);
 
@@ -564,23 +608,23 @@ class NotaController extends Controller
         }
 
         $barang = HargaBarangPokok::create([
-            'user_id'        => $userId,
-            'uraian'         => $validated['uraian'],
-            'kategori'       => $validated['kategori'],
-            'satuan'         => $validated['satuan'],
-            'nilai_satuan'   => 1,
-            'harga_satuan'   => $validated['harga_satuan'],
+            'user_id' => $userId,
+            'uraian' => $validated['uraian'],
+            'kategori' => $validated['kategori'],
+            'satuan' => $validated['satuan'],
+            'nilai_satuan' => 1,
+            'harga_satuan' => $validated['harga_satuan'],
             'profit_per_unit' => $validated['profit_per_unit'] ?? 0,
         ]);
 
         return response()->json([
             'status' => 'ok',
             'data' => [
-                'id'             => $barang->id,
-                'uraian'         => $barang->uraian,
-                'kategori'       => $barang->kategori,
-                'satuan'         => $barang->satuan,
-                'harga_satuan'   => $barang->harga_satuan,
+                'id' => $barang->id,
+                'uraian' => $barang->uraian,
+                'kategori' => $barang->kategori,
+                'satuan' => $barang->satuan,
+                'harga_satuan' => $barang->harga_satuan,
                 'profit_per_unit' => $barang->profit_per_unit ?? 0,
             ],
         ]);

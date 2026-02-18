@@ -24,6 +24,14 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        // Defensive: give a clear error when users table/columns are missing on the host
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('users') || !\Illuminate\Support\Facades\Schema::hasColumn('users', 'email')) {
+                return back()->withErrors(['email' => 'Database schema belum lengkap di server — jalankan migrations (admin).']);
+            }
+        } catch (\Throwable $e) {
+            return back()->withErrors(['email' => 'Koneksi database bermasalah — periksa konfigurasi DB.']);
+        }
 
         $credentials = $request->validate([
             'email' => 'required|email',
@@ -52,6 +60,15 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        // Defensive: ensure users table exists and has email column before running validation
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('users') || !\Illuminate\Support\Facades\Schema::hasColumn('users', 'email')) {
+                return back()->withErrors(['email' => 'Tabel users belum tersedia di server — jalankan migrations (admin).']);
+            }
+        } catch (\Throwable $e) {
+            return back()->withErrors(['email' => 'Koneksi database bermasalah — periksa konfigurasi DB.']);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -67,13 +84,17 @@ class AuthController extends Controller
             'role' => 'user', // Default role for public registration
         ]);
 
-        // Create toko record if user supplied shop info
-        if (!empty($validated['nama_toko']) || !empty($validated['alamat_toko'])) {
-            Toko::create([
-                'nama_toko' => $validated['nama_toko'] ?? $user->name . "'s Toko",
-                'alamat' => $validated['alamat_toko'] ?? '',
-                'user_id' => $user->id,
-            ]);
+        // Create toko record if user supplied shop info (guard if toko table missing)
+        if ((!empty($validated['nama_toko']) || !empty($validated['alamat_toko'])) && \Illuminate\Support\Facades\Schema::hasTable('toko')) {
+            try {
+                Toko::create([
+                    'nama_toko' => $validated['nama_toko'] ?? $user->name . "'s Toko",
+                    'alamat' => $validated['alamat_toko'] ?? '',
+                    'user_id' => $user->id,
+                ]);
+            } catch (\Throwable $e) {
+                // swallow — toko will be created after migrations are applied on the server
+            }
         }
 
         Auth::login($user);

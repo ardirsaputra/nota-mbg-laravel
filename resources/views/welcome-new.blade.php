@@ -44,15 +44,46 @@
         'Sabtu' => '08:00 - 14:00',
         'Minggu' => 'Tutup',
     ]);
-    $galleries = Gallery::ordered()->get();
 
-    // Dashboard/landing metrics
-    $notaCount = \App\Models\Nota::count();
-    $customerCount = \App\Models\User::where('role', 'user')->count();
-    $recentProducts = \App\Models\HargaBarangPokok::where('updated_at', '>=', now()->subDays(5))
-        ->orderBy('updated_at', 'desc')
-        ->take(10)
-        ->get();
+    // Defensive: return empty collection when galleries table is missing on the host
+    try {
+        if (\Illuminate\Support\Facades\Schema::hasTable('galleries')) {
+            $galleries = Gallery::ordered()->get();
+        } else {
+            $galleries = collect();
+        }
+    } catch (Throwable $e) {
+        $galleries = collect();
+    }
+
+    // Dashboard/landing metrics (defensive: avoid DB queries when migrations/tables are missing)
+    $notaCount = 0;
+    $customerCount = 0;
+    $recentProducts = collect();
+
+    try {
+        if (class_exists(\App\Models\Nota::class) && \Illuminate\Support\Facades\Schema::hasTable('nota')) {
+            $notaCount = \App\Models\Nota::count();
+        }
+
+        if (class_exists(\App\Models\User::class) && \Illuminate\Support\Facades\Schema::hasTable('users')) {
+            $customerCount = \App\Models\User::where('role', 'user')->count();
+        }
+
+        if (
+            class_exists(\App\Models\HargaBarangPokok::class) &&
+            \Illuminate\Support\Facades\Schema::hasTable('harga_barang_pokok')
+        ) {
+            $recentProducts = \App\Models\HargaBarangPokok::where('updated_at', '>=', now()->subDays(5))
+                ->orderBy('updated_at', 'desc')
+                ->take(10)
+                ->get();
+        }
+    } catch (Throwable $e) {
+        $notaCount = 0;
+        $customerCount = 0;
+        $recentProducts = collect();
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="id">
