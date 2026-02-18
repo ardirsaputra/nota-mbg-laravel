@@ -358,7 +358,8 @@
                 <div class="gallery-grid">
                     @foreach ($galleries as $gallery)
                         <div class="gallery-item">
-                            <img src="{{ \App\Models\Setting::storageUrl($gallery->image_path) ?? '' }}" alt="{{ $gallery->title }}">
+                            <img src="{{ \App\Models\Setting::storageUrl($gallery->image_path) ?? '' }}"
+                                alt="{{ $gallery->title }}">
                             <div class="gallery-overlay">
                                 <p>{{ $gallery->title }}</p>
                                 <form action="{{ route('settings.gallery.delete', $gallery) }}" method="POST"

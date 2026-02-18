@@ -346,7 +346,8 @@
                 <tr>
                     <td class="logo">
                         @if ($companyLogo)
-                            <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}" alt="Logo">
+                            <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}"
+                                alt="Logo">
                         @endif
                     </td>
 

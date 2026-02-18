@@ -561,7 +561,10 @@
             align-items: center;
         }
 
-        .pagination .page-item { display: inline-block; }
+        .pagination .page-item {
+            display: inline-block;
+        }
+
         .pagination .page-link {
             display: inline-block;
             padding: 6px 10px;
@@ -573,14 +576,14 @@
             text-decoration: none;
             min-width: 36px;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(2,6,23,0.02);
+            box-shadow: 0 2px 8px rgba(2, 6, 23, 0.02);
         }
 
         .pagination .page-item.active .page-link {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: #fff;
             border-color: transparent;
-            box-shadow: 0 10px 30px rgba(102,126,234,0.12);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.12);
         }
 
         .pagination .page-item.disabled .page-link {
@@ -589,9 +592,23 @@
             background: #f8fafc;
         }
 
-        .page-jump { display: inline-flex; gap: 8px; align-items: center; }
-        .page-jump input[type="number"] { width: 80px; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .page-info { color: #64748b; font-size: .9rem; }
+        .page-jump {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .page-jump input[type="number"] {
+            width: 80px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .page-info {
+            color: #64748b;
+            font-size: .9rem;
+        }
     </style>
 @endpush
 
@@ -906,7 +923,8 @@
             <div
                 style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-top:1px solid #f1f5f9;background:#fff;">
                 <div style="color:#64748b;font-size:.9rem;">
-                    Menampilkan <strong>{{ $notas->firstItem() ?? 0 }}</strong> - <strong>{{ $notas->lastItem() ?? 0 }}</strong>
+                    Menampilkan <strong>{{ $notas->firstItem() ?? 0 }}</strong> -
+                    <strong>{{ $notas->lastItem() ?? 0 }}</strong>
                     dari <strong>{{ $notas->total() }}</strong> nota
                 </div>
 
@@ -925,17 +943,23 @@
                             <ul class="pagination">
                                 {{-- First --}}
                                 <li class="page-item {{ $current == 1 ? 'disabled' : '' }}">
-                                    <a class="page-link" href="{{ $current == 1 ? '#' : ($base . '?' . http_build_query(array_merge($query, ['page' => 1]))) }}" aria-label="First">&laquo;&laquo;</a>
+                                    <a class="page-link"
+                                        href="{{ $current == 1 ? '#' : $base . '?' . http_build_query(array_merge($query, ['page' => 1])) }}"
+                                        aria-label="First">&laquo;&laquo;</a>
                                 </li>
 
                                 {{-- Prev --}}
                                 <li class="page-item {{ $current == 1 ? 'disabled' : '' }}">
-                                    <a class="page-link" href="{{ $current == 1 ? '#' : ($base . '?' . http_build_query(array_merge($query, ['page' => $current - 1]))) }}" aria-label="Previous">&laquo;</a>
+                                    <a class="page-link"
+                                        href="{{ $current == 1 ? '#' : $base . '?' . http_build_query(array_merge($query, ['page' => $current - 1])) }}"
+                                        aria-label="Previous">&laquo;</a>
                                 </li>
 
                                 {{-- Leading 1 + ellipsis --}}
                                 @if ($start > 1)
-                                    <li class="page-item"><a class="page-link" href="{{ $base . '?' . http_build_query(array_merge($query, ['page' => 1])) }}">1</a></li>
+                                    <li class="page-item"><a class="page-link"
+                                            href="{{ $base . '?' . http_build_query(array_merge($query, ['page' => 1])) }}">1</a>
+                                    </li>
                                     @if ($start > 2)
                                         <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
                                     @endif
@@ -947,7 +971,8 @@
                                         @if ($i == $current)
                                             <span class="page-link">{{ $i }}</span>
                                         @else
-                                            <a class="page-link" href="{{ $base . '?' . http_build_query(array_merge($query, ['page' => $i])) }}">{{ $i }}</a>
+                                            <a class="page-link"
+                                                href="{{ $base . '?' . http_build_query(array_merge($query, ['page' => $i])) }}">{{ $i }}</a>
                                         @endif
                                     </li>
                                 @endfor
@@ -957,27 +982,36 @@
                                     @if ($end < $last - 1)
                                         <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
                                     @endif
-                                    <li class="page-item"><a class="page-link" href="{{ $base . '?' . http_build_query(array_merge($query, ['page' => $last])) }}">{{ $last }}</a></li>
+                                    <li class="page-item"><a class="page-link"
+                                            href="{{ $base . '?' . http_build_query(array_merge($query, ['page' => $last])) }}">{{ $last }}</a>
+                                    </li>
                                 @endif
 
                                 {{-- Next --}}
                                 <li class="page-item {{ $current == $last ? 'disabled' : '' }}">
-                                    <a class="page-link" href="{{ $current == $last ? '#' : ($base . '?' . http_build_query(array_merge($query, ['page' => $current + 1]))) }}" aria-label="Next">&raquo;</a>
+                                    <a class="page-link"
+                                        href="{{ $current == $last ? '#' : $base . '?' . http_build_query(array_merge($query, ['page' => $current + 1])) }}"
+                                        aria-label="Next">&raquo;</a>
                                 </li>
 
                                 {{-- Last --}}
                                 <li class="page-item {{ $current == $last ? 'disabled' : '' }}">
-                                    <a class="page-link" href="{{ $current == $last ? '#' : ($base . '?' . http_build_query(array_merge($query, ['page' => $last]))) }}" aria-label="Last">&raquo;&raquo;</a>
+                                    <a class="page-link"
+                                        href="{{ $current == $last ? '#' : $base . '?' . http_build_query(array_merge($query, ['page' => $last])) }}"
+                                        aria-label="Last">&raquo;&raquo;</a>
                                 </li>
                             </ul>
                         </nav>
 
-                        <form method="GET" action="{{ $base }}" class="page-jump" style="display:inline-flex;align-items:center;margin-left:12px;">
-                            @foreach($query as $k => $v)
+                        <form method="GET" action="{{ $base }}" class="page-jump"
+                            style="display:inline-flex;align-items:center;margin-left:12px;">
+                            @foreach ($query as $k => $v)
                                 <input type="hidden" name="{{ $k }}" value="{{ $v }}">
                             @endforeach
                             <label style="font-size:.88rem;color:#64748b;margin-right:8px;">Halaman</label>
-                            <input type="number" name="page" min="1" max="{{ $last }}" value="{{ $current }}" style="width:80px;padding:6px;border-radius:8px;border:1px solid #e2e8f0;margin-right:8px;">
+                            <input type="number" name="page" min="1" max="{{ $last }}"
+                                value="{{ $current }}"
+                                style="width:80px;padding:6px;border-radius:8px;border:1px solid #e2e8f0;margin-right:8px;">
                             <button type="submit" class="btn btn-secondary btn-sm">Lompat</button>
                         </form>
                     @endif

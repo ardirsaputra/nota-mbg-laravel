@@ -534,7 +534,8 @@
         <div class="nav-container">
             <div class="logo">
                 @if ($companyLogo)
-                    <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}" alt="{{ $companyName }}">
+                    <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}"
+                        alt="{{ $companyName }}">
                 @else
                     <i class="fas fa-building"></i>
                 @endif
@@ -639,8 +640,8 @@
                 @foreach ($services as $service)
                     <div class="service-card">
                         @if (!empty($service['image']))
-                            <img src="{{ \App\Models\Setting::storageUrl($service['image']) ?? '' }}" alt="{{ $service['title'] ?? '' }}"
-                                class="service-image">
+                            <img src="{{ \App\Models\Setting::storageUrl($service['image']) ?? '' }}"
+                                alt="{{ $service['title'] ?? '' }}" class="service-image">
                         @else
                             <div class="service-image"></div>
                         @endif
@@ -662,7 +663,8 @@
                 <div class="gallery-grid">
                     @foreach ($galleries as $gallery)
                         <div class="gallery-item">
-                            <img src="{{ \App\Models\Setting::storageUrl($gallery->image_path) ?? '' }}" alt="{{ $gallery->title }}">
+                            <img src="{{ \App\Models\Setting::storageUrl($gallery->image_path) ?? '' }}"
+                                alt="{{ $gallery->title }}">
                         </div>
                     @endforeach
                 </div>

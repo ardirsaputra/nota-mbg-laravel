@@ -21,7 +21,8 @@
     </title>
 
     {{-- favicon — use company logo if set, otherwise fallback to public/favicon.ico --}}
-    <link rel="icon" href="{{ $companyLogo ? \App\Models\Setting::storageUrl($companyLogo, asset('favicon.ico')) : asset('favicon.ico') }}" />
+    <link rel="icon"
+        href="{{ $companyLogo ? \App\Models\Setting::storageUrl($companyLogo, asset('favicon.ico')) : asset('favicon.ico') }}" />
 
     <meta name="application-name" content="{{ $companyName }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -393,7 +394,8 @@
             <div class="container">
                 <div class="nav-logo">
                     @if (!empty($companyLogo))
-                        <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}" alt="{{ $companyName }}">
+                        <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}"
+                            alt="{{ $companyName }}">
                     @endif
                     <span class="brand-text">{{ $companyName }}</span>
                 </div>
@@ -494,7 +496,8 @@
             <div class="container">
                 <div class="nav-logo">
                     @if (!empty($companyLogo))
-                        <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}" alt="{{ $companyName }}">
+                        <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}"
+                            alt="{{ $companyName }}">
                     @endif
                     <span class="brand-text">{{ $companyName }}</span>
                 </div>

@@ -199,11 +199,14 @@ Route::middleware(['auth'])->group(function () {
             $files = [];
             $seen = [];
             foreach ([$settingsDir, $settingsDir2, $settingsDir3, $settingsDir4] as $dirIndex => $dir) {
-                if (!is_dir($dir)) continue;
+                if (!is_dir($dir))
+                    continue;
                 foreach (new \DirectoryIterator($dir) as $f) {
-                    if (!$f->isFile()) continue;
+                    if (!$f->isFile())
+                        continue;
                     $name = $f->getFilename();
-                    if (in_array($name, $seen)) continue; // avoid duplicates across dirs
+                    if (in_array($name, $seen))
+                        continue; // avoid duplicates across dirs
                     $seen[] = $name;
 
                     // determine public URL depending on which dir the file was found in
