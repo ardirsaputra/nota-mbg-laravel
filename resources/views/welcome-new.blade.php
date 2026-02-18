@@ -186,7 +186,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-image: url('{{ $heroImage ? asset('storage/' . $heroImage) : '' }}');
+            background-image: url('{{ $heroImage ? \App\Models\Setting::storageUrl($heroImage) : '' }}');
             background-size: cover;
             background-position: center;
             opacity: 0.2;
@@ -534,7 +534,7 @@
         <div class="nav-container">
             <div class="logo">
                 @if ($companyLogo)
-                    <img src="{{ asset('storage/' . $companyLogo) }}" alt="{{ $companyName }}">
+                    <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}" alt="{{ $companyName }}">
                 @else
                     <i class="fas fa-building"></i>
                 @endif
@@ -639,7 +639,7 @@
                 @foreach ($services as $service)
                     <div class="service-card">
                         @if (!empty($service['image']))
-                            <img src="{{ asset('storage/' . $service['image']) }}" alt="{{ $service['title'] ?? '' }}"
+                            <img src="{{ \App\Models\Setting::storageUrl($service['image']) ?? '' }}" alt="{{ $service['title'] ?? '' }}"
                                 class="service-image">
                         @else
                             <div class="service-image"></div>
@@ -662,7 +662,7 @@
                 <div class="gallery-grid">
                     @foreach ($galleries as $gallery)
                         <div class="gallery-item">
-                            <img src="{{ asset('storage/' . $gallery->image_path) }}" alt="{{ $gallery->title }}">
+                            <img src="{{ \App\Models\Setting::storageUrl($gallery->image_path) ?? '' }}" alt="{{ $gallery->title }}">
                         </div>
                     @endforeach
                 </div>

@@ -67,7 +67,7 @@
                         @endphp
                         @if ($currentLogo)
                             <div class="current-image">
-                                <img src="{{ asset('storage/' . $currentLogo) }}" alt="Logo">
+                                <img src="{{ \App\Models\Setting::storageUrl($currentLogo) ?? '' }}" alt="Logo">
                             </div>
                         @endif
                         <input type="file" id="company_logo" name="company_logo" class="form-control" accept="image/*">
@@ -123,7 +123,7 @@
                         @endphp
                         @if ($currentHero)
                             <div class="current-image">
-                                <img src="{{ asset('storage/' . $currentHero) }}" alt="Hero">
+                                <img src="{{ \App\Models\Setting::storageUrl($currentHero) ?? '' }}" alt="Hero">
                             </div>
                         @endif
                         <input type="file" id="hero_image" name="hero_image" class="form-control" accept="image/*">
@@ -260,7 +260,7 @@
                                 <label>Gambar Layanan</label>
                                 @if (!empty($services[$i]['image']))
                                     <div class="current-image">
-                                        <img src="{{ asset('storage/' . $services[$i]['image']) }}"
+                                        <img src="{{ \App\Models\Setting::storageUrl($services[$i]['image']) ?? '' }}"
                                             alt="Service {{ $i + 1 }}">
                                     </div>
                                 @endif
@@ -358,7 +358,7 @@
                 <div class="gallery-grid">
                     @foreach ($galleries as $gallery)
                         <div class="gallery-item">
-                            <img src="{{ asset('storage/' . $gallery->image_path) }}" alt="{{ $gallery->title }}">
+                            <img src="{{ \App\Models\Setting::storageUrl($gallery->image_path) ?? '' }}" alt="{{ $gallery->title }}">
                             <div class="gallery-overlay">
                                 <p>{{ $gallery->title }}</p>
                                 <form action="{{ route('settings.gallery.delete', $gallery) }}" method="POST"

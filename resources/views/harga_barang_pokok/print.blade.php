@@ -114,7 +114,7 @@
                 left: 50%;
                 width: 420px;
                 height: 420px;
-                background: url("{{ asset('storage/' . $companyLogo) }}") no-repeat center;
+                background: url("{{ \App\Models\Setting::storageUrl($companyLogo) ?? '' }}") no-repeat center;
                 background-size: contain;
                 opacity: 0.07;
                 transform: translate(-50%, -50%);
@@ -346,7 +346,7 @@
                 <tr>
                     <td class="logo">
                         @if ($companyLogo)
-                            <img src="{{ asset('storage/' . $companyLogo) }}" alt="Logo">
+                            <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}" alt="Logo">
                         @endif
                     </td>
 

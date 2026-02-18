@@ -59,4 +59,42 @@ class Setting extends Model
         // Prefer delegating to the query builder which implements the method.
         return static::query()->updateOrCreate($attributes, $values);
     }
+
+    /**
+     * Return a publicly-accessible URL for a stored file path that may reside in:
+     * - public/storage/<path>
+     * - public/storage/public/<path>
+     * - storage disk 'public' (when public/storage is a symlink)
+     *
+     * Accepts null and returns $default when not found.
+     */
+    public static function storageUrl(?string $relativePath, $default = null)
+    {
+        if (empty($relativePath)) {
+            return $default;
+        }
+
+        // prefer public/storage/<path>
+        $publicPath = public_path('storage/' . $relativePath);
+        if (file_exists($publicPath)) {
+            return asset('storage/' . $relativePath);
+        }
+
+        // fallback: public/storage/public/<path> (some hosts or legacy uploads)
+        $publicPath2 = public_path('storage/public/' . $relativePath);
+        if (file_exists($publicPath2)) {
+            return asset('storage/public/' . $relativePath);
+        }
+
+        // fallback: check storage disk (symlink scenario)
+        try {
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($relativePath)) {
+                return asset('storage/' . $relativePath);
+            }
+        } catch (\Throwable $e) {
+            // ignore disk errors
+        }
+
+        return $default;
+    }
 }

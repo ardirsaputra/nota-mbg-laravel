@@ -345,7 +345,7 @@
         <div class="header">
             <div class="company-info">
                 @if ($companyLogo)
-                    <img src="{{ asset('storage/' . $companyLogo) }}" alt="{{ $companyName }}" class="company-logo">
+                    <img src="{{ \App\Models\Setting::storageUrl($companyLogo) ?? asset('favicon.ico') }}" alt="{{ $companyName }}" class="company-logo">
                 @endif
                 <h1>{{ strtoupper($companyName) }}</h1>
                 @if (!auth()->user()->isAdmin())
